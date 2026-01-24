@@ -9,13 +9,6 @@
     /* Page-specific styles for pricing */
     header {
       background: linear-gradient(135deg, #4f46e5, #6366f1);
-      padding: 3rem 1rem;
-    }
-    header .logo {
-      height: 60px;
-    }
-    header p {
-      font-size: 1.2rem;
     }
     .pricing-grid {
       display: grid;
@@ -70,6 +63,53 @@
     .faq-item h4 {
       margin: 0 0 0.5rem 0;
       color: #111827;
+    }
+
+    /* Responsive styles for pricing page */
+    @media (max-width: 640px) {
+      .pricing-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+      }
+
+      .section-title h2 {
+        font-size: 1.6rem;
+      }
+
+      .card h3 {
+        font-size: 1.3rem;
+      }
+
+      .price {
+        font-size: 1.8rem;
+      }
+
+      .faq {
+        margin-top: 2rem;
+      }
+
+      .faq-item {
+        padding: 1rem;
+      }
+    }
+
+    @media (min-width: 641px) and (max-width: 1024px) {
+      .pricing-grid {
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 1.5rem;
+      }
+
+      .section-title h2 {
+        font-size: 1.9rem;
+      }
+
+      .card h3 {
+        font-size: 1.4rem;
+      }
+
+      .price {
+        font-size: 2rem;
+      }
     }
   </style>
 </head>
