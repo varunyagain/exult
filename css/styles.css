@@ -19,6 +19,14 @@ header h1 {
   font-size: 2rem;
 }
 
+/* Logo */
+.logo {
+  height: 50px;
+  width: auto;
+  margin-bottom: 0.5rem;
+  filter: brightness(0) invert(1);
+}
+
 header p {
   margin: 0.5rem 0;
   opacity: 0.95;
