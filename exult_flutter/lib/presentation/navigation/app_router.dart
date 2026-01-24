@@ -7,6 +7,7 @@ import 'package:exult_flutter/presentation/screens/auth/sign_in_screen.dart';
 import 'package:exult_flutter/presentation/screens/auth/sign_up_screen.dart';
 import 'package:exult_flutter/presentation/screens/home/home_screen.dart';
 import 'package:exult_flutter/presentation/screens/books/browse_books_screen.dart';
+import 'package:exult_flutter/presentation/screens/books/book_detail_screen.dart';
 import 'package:exult_flutter/presentation/screens/profile/profile_screen.dart';
 import 'package:exult_flutter/presentation/screens/loans/my_loans_screen.dart';
 import 'package:exult_flutter/presentation/screens/pricing/pricing_screen.dart';
@@ -82,6 +83,17 @@ final routerProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) => const MaterialPage(
           child: BrowseBooksScreen(),
         ),
+        routes: [
+          GoRoute(
+            path: ':bookId',
+            pageBuilder: (context, state) {
+              final bookId = state.pathParameters['bookId']!;
+              return MaterialPage(
+                child: BookDetailScreen(bookId: bookId),
+              );
+            },
+          ),
+        ],
       ),
       GoRoute(
         path: RouteConstants.profile,
