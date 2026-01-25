@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:exult_flutter/app.dart';
+import 'package:exult_flutter/data/seed_data.dart';
 import 'firebase_options.dart';
 
 /// Main entry point for the Exult application
@@ -19,13 +20,17 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Initialize Firebase
-  // Note: Uncomment this after running 'flutterfire configure'
-   await Firebase.initializeApp(
-     options: DefaultFirebaseOptions.currentPlatform,
-   );
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
 
-  // For now, we'll run without Firebase to show the app structure
-  // TODO: Configure Firebase and uncomment the initialization above
+  // Seed sample books if database is empty (runs only once)
+  // Wrapped in try-catch to not block app startup
+  try {
+    await SeedData.seedBooks();
+  } catch (e) {
+    print('Seeding skipped: $e');
+  }
 
   runApp(
     const ProviderScope(
