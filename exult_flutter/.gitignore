@@ -45,3 +45,6 @@ app.*.map.json
 
 # Firebase configuration with sensitive keys
 lib/firebase_options.dart
+
+# Firebase cache
+.firebase/

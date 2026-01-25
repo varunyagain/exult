@@ -48,7 +48,7 @@ class Book {
   final String description;
   final String? coverImageUrl;
   final BookOwnerType ownerType;
-  final List<String> category;
+  final List<String> categories;
   final double depositAmount;
   final BookStatus status;
   final DateTime createdAt;
@@ -61,7 +61,7 @@ class Book {
     required this.description,
     this.coverImageUrl,
     required this.ownerType,
-    required this.category,
+    required this.categories,
     required this.depositAmount,
     required this.status,
     required this.createdAt,
@@ -76,7 +76,7 @@ class Book {
       'description': description,
       'coverImageUrl': coverImageUrl,
       'ownerType': ownerType.toJson(),
-      'category': category,
+      'categories': categories,
       'depositAmount': depositAmount,
       'status': status.toJson(),
       'createdAt': Timestamp.fromDate(createdAt),
@@ -92,7 +92,7 @@ class Book {
       description: json['description'] as String? ?? '',
       coverImageUrl: json['coverImageUrl'] as String?,
       ownerType: BookOwnerType.fromJson(json['ownerType'] as String? ?? 'business'),
-      category: (json['category'] as List<dynamic>?)?.map((e) => e as String).toList() ?? [],
+      categories: (json['categories'] as List<dynamic>?)?.map((e) => e as String).toList() ?? [],
       depositAmount: (json['depositAmount'] as num?)?.toDouble() ?? 0.0,
       status: BookStatus.fromJson(json['status'] as String? ?? 'available'),
       createdAt: (json['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
@@ -107,7 +107,7 @@ class Book {
     String? description,
     String? coverImageUrl,
     BookOwnerType? ownerType,
-    List<String>? category,
+    List<String>? categories,
     double? depositAmount,
     BookStatus? status,
     DateTime? createdAt,
@@ -120,7 +120,7 @@ class Book {
       description: description ?? this.description,
       coverImageUrl: coverImageUrl ?? this.coverImageUrl,
       ownerType: ownerType ?? this.ownerType,
-      category: category ?? this.category,
+      categories: categories ?? this.categories,
       depositAmount: depositAmount ?? this.depositAmount,
       status: status ?? this.status,
       createdAt: createdAt ?? this.createdAt,

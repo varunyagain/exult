@@ -87,20 +87,7 @@ class FirebaseBookRepository implements BookRepository {
         .collection(FirebaseConstants.booksCollection)
         .doc();
 
-    final bookWithId = Book(
-      id: docRef.id,
-      title: book.title,
-      author: book.author,
-      isbn: book.isbn,
-      description: book.description,
-      coverImageUrl: book.coverImageUrl,
-      ownerType: book.ownerType,
-      ownerId: book.ownerId,
-      categories: book.categories,
-      depositAmount: book.depositAmount,
-      status: book.status,
-      createdAt: book.createdAt,
-    );
+    final bookWithId = book.copyWith(id: docRef.id);
 
     await docRef.set(bookWithId.toJson());
   }
