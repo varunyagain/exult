@@ -5,6 +5,7 @@ import 'package:exult_flutter/core/constants/route_constants.dart';
 import 'package:exult_flutter/domain/models/book_model.dart';
 import 'package:exult_flutter/presentation/providers/books_provider.dart';
 import 'package:exult_flutter/presentation/providers/auth_provider.dart';
+import 'package:exult_flutter/presentation/providers/subscription_provider.dart';
 import 'package:intl/intl.dart';
 
 class BookDetailScreen extends ConsumerWidget {
@@ -214,25 +215,8 @@ class BookDetailScreen extends ConsumerWidget {
                           _buildStatusBadge(context, book),
                           const SizedBox(height: 24),
 
-                          // Borrow Button
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton.icon(
-                              onPressed: book.status == BookStatus.available
-                                  ? () => _handleBorrowBook(context, ref, book)
-                                  : null,
-                              icon: const Icon(Icons.book),
-                              label: Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 12),
-                                child: Text(
-                                  book.status == BookStatus.available
-                                      ? 'Borrow This Book'
-                                      : 'Currently Unavailable',
-                                  style: const TextStyle(fontSize: 16),
-                                ),
-                              ),
-                            ),
-                          ),
+                          // Borrow Button with Subscription Check
+                          _buildBorrowButton(context, ref, book),
                         ],
                       ),
                     ),
@@ -410,23 +394,231 @@ class BookDetailScreen extends ConsumerWidget {
     );
   }
 
-  void _handleBorrowBook(BuildContext context, WidgetRef ref, Book book) {
-    // TODO: Implement borrowing flow in Phase 8
-    // For now, show a placeholder dialog
+  Widget _buildBorrowButton(BuildContext context, WidgetRef ref, Book book) {
+    final subscriptionAsync = ref.watch(activeSubscriptionProvider);
+    final canBorrowMore = ref.watch(canBorrowMoreProvider);
+
+    return subscriptionAsync.when(
+      data: (subscription) {
+        // No subscription
+        if (subscription == null) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.orange.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.orange.shade200),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.info_outline, color: Colors.orange.shade700),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'You need an active subscription to borrow books',
+                        style: TextStyle(color: Colors.orange.shade700),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: () => context.go(RouteConstants.subscribe),
+                  icon: const Icon(Icons.card_membership),
+                  label: const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 12),
+                    child: Text(
+                      'Subscribe Now',
+                      style: TextStyle(fontSize: 16),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          );
+        }
+
+        // Has subscription but can't borrow more
+        if (!canBorrowMore) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.orange.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.orange.shade200),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.warning_amber_rounded, color: Colors.orange.shade700),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'You\'ve reached your borrowing limit. Return a book to borrow more.',
+                        style: TextStyle(color: Colors.orange.shade700),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () => context.go(RouteConstants.loans),
+                  icon: const Icon(Icons.library_books),
+                  label: const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 12),
+                    child: Text(
+                      'View My Loans',
+                      style: TextStyle(fontSize: 16),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          );
+        }
+
+        // Book not available
+        if (book.status != BookStatus.available) {
+          return SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: null,
+              icon: const Icon(Icons.book),
+              label: const Padding(
+                padding: EdgeInsets.symmetric(vertical: 12),
+                child: Text(
+                  'Currently Unavailable',
+                  style: TextStyle(fontSize: 16),
+                ),
+              ),
+            ),
+          );
+        }
+
+        // Can borrow
+        return SizedBox(
+          width: double.infinity,
+          child: FilledButton.icon(
+            onPressed: () => _handleBorrowBook(context, ref, book, subscription),
+            icon: const Icon(Icons.book),
+            label: const Padding(
+              padding: EdgeInsets.symmetric(vertical: 12),
+              child: Text(
+                'Borrow This Book',
+                style: TextStyle(fontSize: 16),
+              ),
+            ),
+          ),
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (_, __) => const SizedBox.shrink(),
+    );
+  }
+
+  void _handleBorrowBook(
+    BuildContext context,
+    WidgetRef ref,
+    Book book,
+    dynamic subscription,
+  ) {
+    final currencyFormat = NumberFormat.currency(
+      locale: 'en_IN',
+      symbol: '₹',
+      decimalDigits: 0,
+    );
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Borrow Book'),
+        title: const Row(
+          children: [
+            Icon(Icons.book),
+            SizedBox(width: 8),
+            Text('Confirm Borrow'),
+          ],
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('You are about to borrow: ${book.title}'),
+            Text(
+              'You are about to borrow:',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              book.title,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
+            Text(
+              'by ${book.author}',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).textTheme.bodySmall?.color,
+                  ),
+            ),
+            const SizedBox(height: 16),
+            Card(
+              color: Theme.of(context).colorScheme.surfaceContainerHighest,
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('Refundable Deposit'),
+                        Text(
+                          currencyFormat.format(book.depositAmount),
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('Loan Duration'),
+                        const Text(
+                          '14 days',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('Remaining Borrows'),
+                        Text(
+                          '${subscription.remainingBooks - 1} after this',
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
             const SizedBox(height: 16),
             Text(
-              'Borrowing feature will be implemented in Phase 8: Loan Management',
+              'Note: Full loan management will be implemented in Phase 5.',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     fontStyle: FontStyle.italic,
+                    color: Theme.of(context).colorScheme.secondary,
                   ),
             ),
           ],
@@ -434,7 +626,18 @@ class BookDetailScreen extends ConsumerWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('OK'),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Loan management coming in Phase 5!'),
+                ),
+              );
+            },
+            child: const Text('Confirm Borrow'),
           ),
         ],
       ),

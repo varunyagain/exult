@@ -20,6 +20,9 @@ abstract class UserRepository {
   /// Get all users (admin only)
   Future<List<UserModel>> getAllUsers();
 
+  /// Stream of all users (admin only)
+  Stream<List<UserModel>> watchAllUsers();
+
   /// Check if user exists
   Future<bool> userExists(String userId);
 }

@@ -13,6 +13,9 @@ import 'package:exult_flutter/presentation/screens/loans/my_loans_screen.dart';
 import 'package:exult_flutter/presentation/screens/pricing/pricing_screen.dart';
 import 'package:exult_flutter/presentation/screens/how_it_works/how_it_works_screen.dart';
 import 'package:exult_flutter/presentation/screens/contact/contact_us_screen.dart';
+import 'package:exult_flutter/presentation/screens/subscribe/subscribe_screen.dart';
+import 'package:exult_flutter/presentation/screens/admin/admin_users_screen.dart';
+import 'package:exult_flutter/presentation/screens/admin/admin_user_detail_screen.dart';
 
 /// Provider for the router configuration
 final routerProvider = Provider<GoRouter>((ref) {
@@ -106,6 +109,31 @@ final routerProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) => const MaterialPage(
           child: MyLoansScreen(),
         ),
+      ),
+      GoRoute(
+        path: RouteConstants.subscribe,
+        pageBuilder: (context, state) => const MaterialPage(
+          child: SubscribeScreen(),
+        ),
+      ),
+
+      // Admin routes (require authentication + admin role)
+      GoRoute(
+        path: RouteConstants.admin,
+        pageBuilder: (context, state) => const MaterialPage(
+          child: AdminUsersScreen(),
+        ),
+        routes: [
+          GoRoute(
+            path: 'users/:userId',
+            pageBuilder: (context, state) {
+              final userId = state.pathParameters['userId']!;
+              return MaterialPage(
+                child: AdminUserDetailScreen(userId: userId),
+              );
+            },
+          ),
+        ],
       ),
     ],
     errorBuilder: (context, state) => Scaffold(

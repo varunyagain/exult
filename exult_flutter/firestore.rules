@@ -21,14 +21,35 @@ service cloud.firestore {
          resource.data.ownerId == request.auth.uid);
     }
 
-    // Loans collection
-    match /loans/{loanId} {
+    // Subscriptions collection
+    match /subscriptions/{subscriptionId} {
+      // Users can read their own subscriptions, admins can read all
       allow read: if request.auth != null &&
         (request.auth.uid == resource.data.userId ||
          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
-      allow create: if request.auth != null;
+      // Users can create their own subscriptions
+      allow create: if request.auth != null &&
+        request.auth.uid == request.resource.data.userId;
+      // Users can update (cancel) their own subscriptions, admins can update any
       allow update: if request.auth != null &&
         (request.auth.uid == resource.data.userId ||
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
+      // Only admins can delete subscriptions
+      allow delete: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // Loans collection
+    match /loans/{loanId} {
+      // Users can read their own loans (by borrowerId), admins can read all
+      allow read: if request.auth != null &&
+        (request.auth.uid == resource.data.borrowerId ||
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
+      // Authenticated users can create loans
+      allow create: if request.auth != null;
+      // Users can update their own loans, admins can update any
+      allow update: if request.auth != null &&
+        (request.auth.uid == resource.data.borrowerId ||
          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
       allow delete: if false;
     }

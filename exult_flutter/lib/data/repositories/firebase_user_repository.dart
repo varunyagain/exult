@@ -72,6 +72,16 @@ class FirebaseUserRepository implements UserRepository {
   }
 
   @override
+  Stream<List<UserModel>> watchAllUsers() {
+    return _usersCollection
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.docs.map((doc) => UserModel.fromJson(doc.data())).toList();
+    });
+  }
+
+  @override
   Future<bool> userExists(String userId) async {
     try {
       final doc = await _usersCollection.doc(userId).get();
