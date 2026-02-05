@@ -51,6 +51,8 @@ class Book {
   final List<String> categories;
   final double depositAmount;
   final BookStatus status;
+  final int totalCopies;
+  final int availableCopies;
   final DateTime createdAt;
 
   const Book({
@@ -64,6 +66,8 @@ class Book {
     required this.categories,
     required this.depositAmount,
     required this.status,
+    this.totalCopies = 1,
+    this.availableCopies = 1,
     required this.createdAt,
   });
 
@@ -79,6 +83,8 @@ class Book {
       'categories': categories,
       'depositAmount': depositAmount,
       'status': status.toJson(),
+      'totalCopies': totalCopies,
+      'availableCopies': availableCopies,
       'createdAt': Timestamp.fromDate(createdAt),
     };
   }
@@ -95,6 +101,8 @@ class Book {
       categories: (json['categories'] as List<dynamic>?)?.map((e) => e as String).toList() ?? [],
       depositAmount: (json['depositAmount'] as num?)?.toDouble() ?? 0.0,
       status: BookStatus.fromJson(json['status'] as String? ?? 'available'),
+      totalCopies: json['totalCopies'] as int? ?? 1,
+      availableCopies: json['availableCopies'] as int? ?? 1,
       createdAt: (json['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
   }
@@ -110,6 +118,8 @@ class Book {
     List<String>? categories,
     double? depositAmount,
     BookStatus? status,
+    int? totalCopies,
+    int? availableCopies,
     DateTime? createdAt,
   }) {
     return Book(
@@ -123,6 +133,8 @@ class Book {
       categories: categories ?? this.categories,
       depositAmount: depositAmount ?? this.depositAmount,
       status: status ?? this.status,
+      totalCopies: totalCopies ?? this.totalCopies,
+      availableCopies: availableCopies ?? this.availableCopies,
       createdAt: createdAt ?? this.createdAt,
     );
   }

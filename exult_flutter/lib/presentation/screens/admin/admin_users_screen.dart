@@ -26,12 +26,18 @@ class AdminUsersScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('User Management'),
+        title: const Text('Admin Dashboard'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.go(RouteConstants.books),
         ),
         actions: [
+          TextButton.icon(
+            onPressed: () => context.go('${RouteConstants.admin}/books'),
+            icon: const Icon(Icons.library_books),
+            label: const Text('Manage Books'),
+          ),
+          const SizedBox(width: 8),
           IconButton(
             icon: const Icon(Icons.refresh),
             tooltip: 'Refresh',

@@ -16,6 +16,7 @@ import 'package:exult_flutter/presentation/screens/contact/contact_us_screen.dar
 import 'package:exult_flutter/presentation/screens/subscribe/subscribe_screen.dart';
 import 'package:exult_flutter/presentation/screens/admin/admin_users_screen.dart';
 import 'package:exult_flutter/presentation/screens/admin/admin_user_detail_screen.dart';
+import 'package:exult_flutter/presentation/screens/admin/admin_books_screen.dart';
 
 /// Provider for the router configuration
 final routerProvider = Provider<GoRouter>((ref) {
@@ -132,6 +133,12 @@ final routerProvider = Provider<GoRouter>((ref) {
                 child: AdminUserDetailScreen(userId: userId),
               );
             },
+          ),
+          GoRoute(
+            path: 'books',
+            pageBuilder: (context, state) => const MaterialPage(
+              child: AdminBooksScreen(),
+            ),
           ),
         ],
       ),
