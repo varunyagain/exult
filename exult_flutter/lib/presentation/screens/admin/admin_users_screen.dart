@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:exult_flutter/core/constants/route_constants.dart';
 import 'package:exult_flutter/presentation/providers/admin_provider.dart';
-import 'package:exult_flutter/presentation/providers/auth_provider.dart';
 import 'package:intl/intl.dart';
 
 class AdminUsersScreen extends ConsumerWidget {
@@ -26,32 +25,13 @@ class AdminUsersScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Admin Dashboard'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go(RouteConstants.books),
-        ),
+        title: const Text('Manage Subscribers'),
+        automaticallyImplyLeading: false,
         actions: [
-          TextButton.icon(
-            onPressed: () => context.go('${RouteConstants.admin}/books'),
-            icon: const Icon(Icons.library_books),
-            label: const Text('Manage Books'),
-          ),
-          const SizedBox(width: 8),
           IconButton(
             icon: const Icon(Icons.refresh),
             tooltip: 'Refresh',
             onPressed: () => ref.invalidate(usersWithDetailsProvider),
-          ),
-          IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: 'Sign Out',
-            onPressed: () async {
-              await ref.read(authControllerProvider.notifier).signOut();
-              if (context.mounted) {
-                context.go(RouteConstants.home);
-              }
-            },
           ),
           const SizedBox(width: 16),
         ],
@@ -373,7 +353,7 @@ class _UserListTile extends StatelessWidget {
       ),
       trailing: const Icon(Icons.chevron_right),
       onTap: () {
-        context.go('${RouteConstants.admin}/users/${user.uid}');
+        context.go('${RouteConstants.adminSubscribers}/${user.uid}');
       },
     );
   }

@@ -174,3 +174,118 @@ final isAdminProvider = Provider<bool>((ref) {
   final currentUser = ref.watch(currentUserProvider);
   return currentUser.valueOrNull?.isAdmin ?? false;
 });
+
+/// Date range for dashboard filtering
+class DateRange {
+  final DateTime start;
+  final DateTime end;
+
+  const DateRange({required this.start, required this.end});
+
+  DateRange get previousPeriod {
+    final duration = end.difference(start);
+    return DateRange(
+      start: start.subtract(duration),
+      end: start,
+    );
+  }
+}
+
+/// Dashboard metrics computed from existing data
+class DashboardMetrics {
+  final int totalBooksLent;
+  final int previousBooksLent;
+  final int totalBooksUnderManagement;
+  final int previousBooksUnderManagement;
+  final int totalActiveSubscribers;
+  final int previousActiveSubscribers;
+
+  const DashboardMetrics({
+    required this.totalBooksLent,
+    required this.previousBooksLent,
+    required this.totalBooksUnderManagement,
+    required this.previousBooksUnderManagement,
+    required this.totalActiveSubscribers,
+    required this.previousActiveSubscribers,
+  });
+
+  double get booksLentChange => _percentChange(previousBooksLent, totalBooksLent);
+  double get booksManagementChange =>
+      _percentChange(previousBooksUnderManagement, totalBooksUnderManagement);
+  double get subscribersChange =>
+      _percentChange(previousActiveSubscribers, totalActiveSubscribers);
+
+  double _percentChange(int previous, int current) {
+    if (previous == 0) return current > 0 ? 100.0 : 0.0;
+    return ((current - previous) / previous) * 100;
+  }
+}
+
+/// Provider for the selected date range
+final dashboardDateRangeProvider = StateProvider<DateRange>((ref) {
+  final now = DateTime.now();
+  return DateRange(
+    start: now.subtract(const Duration(days: 30)),
+    end: now,
+  );
+});
+
+/// Provider that computes dashboard metrics from existing streams
+final dashboardMetricsProvider = Provider<AsyncValue<DashboardMetrics>>((ref) {
+  final dateRange = ref.watch(dashboardDateRangeProvider);
+  final loansAsync = ref.watch(allLoansProvider);
+  final booksAsync = ref.watch(allBooksProvider);
+  final usersAsync = ref.watch(allUsersProvider);
+
+  // Check if all data is loaded
+  if (loansAsync.isLoading || booksAsync.isLoading || usersAsync.isLoading) {
+    return const AsyncValue.loading();
+  }
+
+  if (loansAsync.hasError) return AsyncValue.error(loansAsync.error!, loansAsync.stackTrace!);
+  if (booksAsync.hasError) return AsyncValue.error(booksAsync.error!, booksAsync.stackTrace!);
+  if (usersAsync.hasError) return AsyncValue.error(usersAsync.error!, usersAsync.stackTrace!);
+
+  final loans = loansAsync.value ?? [];
+  final books = booksAsync.value ?? [];
+  final users = usersAsync.value ?? [];
+
+  final previousRange = dateRange.previousPeriod;
+
+  // (a) Total Books Lent — loans where borrowedAt falls in period
+  final currentLoans = loans
+      .where((l) =>
+          l.borrowedAt.isAfter(dateRange.start) &&
+          l.borrowedAt.isBefore(dateRange.end))
+      .length;
+  final previousLoans = loans
+      .where((l) =>
+          l.borrowedAt.isAfter(previousRange.start) &&
+          l.borrowedAt.isBefore(previousRange.end))
+      .length;
+
+  // (b) Total Books Under Management — sum of totalCopies for books existing by end of period
+  final currentBooks = books
+      .where((b) => b.createdAt.isBefore(dateRange.end))
+      .fold<int>(0, (sum, b) => sum + b.totalCopies);
+  final previousBooks = books
+      .where((b) => b.createdAt.isBefore(previousRange.end))
+      .fold<int>(0, (sum, b) => sum + b.totalCopies);
+
+  // (c) Total Subscribers — users created by end of period (proxy for active subscribers)
+  final currentSubscribers = users
+      .where((u) => u.createdAt.isBefore(dateRange.end) && u.role == UserRole.subscriber)
+      .length;
+  final previousSubscribers = users
+      .where((u) => u.createdAt.isBefore(previousRange.end) && u.role == UserRole.subscriber)
+      .length;
+
+  return AsyncValue.data(DashboardMetrics(
+    totalBooksLent: currentLoans,
+    previousBooksLent: previousLoans,
+    totalBooksUnderManagement: currentBooks,
+    previousBooksUnderManagement: previousBooks,
+    totalActiveSubscribers: currentSubscribers,
+    previousActiveSubscribers: previousSubscribers,
+  ));
+});

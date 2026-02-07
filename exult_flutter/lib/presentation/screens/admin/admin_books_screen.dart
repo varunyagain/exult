@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:exult_flutter/core/constants/app_constants.dart';
 import 'package:exult_flutter/core/constants/route_constants.dart';
 import 'package:exult_flutter/domain/models/book_model.dart';
 import 'package:exult_flutter/presentation/providers/admin_provider.dart';
 import 'package:exult_flutter/presentation/providers/books_provider.dart';
+import 'package:exult_flutter/presentation/widgets/category_tree_widget.dart';
 import 'package:intl/intl.dart';
 
 class AdminBooksScreen extends ConsumerStatefulWidget {
@@ -18,7 +20,7 @@ class _AdminBooksScreenState extends ConsumerState<AdminBooksScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   String? _statusFilter;
-  String? _categoryFilter;
+  Set<String> _selectedTreeCategories = {};
   String _sortColumn = 'title';
   bool _sortAscending = true;
 
@@ -45,10 +47,7 @@ class _AdminBooksScreenState extends ConsumerState<AdminBooksScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Book Management'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go(RouteConstants.admin),
-        ),
+        automaticallyImplyLeading: false,
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -64,169 +63,165 @@ class _AdminBooksScreenState extends ConsumerState<AdminBooksScreen> {
           const SizedBox(width: 16),
         ],
       ),
-      body: Column(
+      body: Row(
         children: [
-          // Search and Filter Bar
+          // Category tree sidebar
           Container(
-            padding: const EdgeInsets.all(16),
+            width: 240,
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface,
               border: Border(
-                bottom: BorderSide(
+                right: BorderSide(
                   color: Theme.of(context).dividerColor,
                 ),
               ),
             ),
-            child: Row(
-              children: [
-                // Search Field
-                Expanded(
-                  flex: 2,
-                  child: TextField(
-                    controller: _searchController,
-                    decoration: InputDecoration(
-                      hintText: 'Search by title, author, or ISBN...',
-                      prefixIcon: const Icon(Icons.search),
-                      suffixIcon: _searchQuery.isNotEmpty
-                          ? IconButton(
-                              icon: const Icon(Icons.clear),
-                              onPressed: () {
-                                _searchController.clear();
-                                setState(() => _searchQuery = '');
-                              },
-                            )
-                          : null,
-                      border: const OutlineInputBorder(),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
-                    ),
-                    onChanged: (value) {
-                      setState(() => _searchQuery = value.toLowerCase());
-                    },
-                  ),
-                ),
-                const SizedBox(width: 16),
-
-                // Status Filter
-                SizedBox(
-                  width: 150,
-                  child: DropdownButtonFormField<String>(
-                    value: _statusFilter,
-                    decoration: const InputDecoration(
-                      labelText: 'Status',
-                      border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 12,
-                      ),
-                    ),
-                    items: const [
-                      DropdownMenuItem(value: null, child: Text('All')),
-                      DropdownMenuItem(
-                          value: 'available', child: Text('Available')),
-                      DropdownMenuItem(
-                          value: 'borrowed', child: Text('Borrowed')),
-                    ],
-                    onChanged: (value) {
-                      setState(() => _statusFilter = value);
-                    },
-                  ),
-                ),
-                const SizedBox(width: 16),
-
-                // Category Filter
-                SizedBox(
-                  width: 150,
-                  child: DropdownButtonFormField<String>(
-                    value: _categoryFilter,
-                    decoration: const InputDecoration(
-                      labelText: 'Category',
-                      border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 12,
-                      ),
-                    ),
-                    items: const [
-                      DropdownMenuItem(value: null, child: Text('All')),
-                      DropdownMenuItem(value: 'Fiction', child: Text('Fiction')),
-                      DropdownMenuItem(
-                          value: 'Non-Fiction', child: Text('Non-Fiction')),
-                      DropdownMenuItem(value: 'Science', child: Text('Science')),
-                      DropdownMenuItem(value: 'History', child: Text('History')),
-                      DropdownMenuItem(
-                          value: 'Biography', child: Text('Biography')),
-                    ],
-                    onChanged: (value) {
-                      setState(() => _categoryFilter = value);
-                    },
-                  ),
-                ),
-              ],
+            child: CategoryTreeWidget(
+              categoriesWithBooks: ref.watch(allBookCategoriesAdminProvider),
+              selectedCategories: _selectedTreeCategories,
+              onSelectionChanged: (newSelection) {
+                setState(() => _selectedTreeCategories = newSelection);
+              },
             ),
           ),
 
-          // Data Table
+          // Main content
           Expanded(
-            child: allBooksAsync.when(
-              data: (books) {
-                final filteredBooks = _filterAndSortBooks(books);
+            child: Column(
+              children: [
+                // Search and Status Filter Bar
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surface,
+                    border: Border(
+                      bottom: BorderSide(
+                        color: Theme.of(context).dividerColor,
+                      ),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      // Search Field
+                      Expanded(
+                        flex: 2,
+                        child: TextField(
+                          controller: _searchController,
+                          decoration: InputDecoration(
+                            hintText: 'Search by title, author, or ISBN...',
+                            prefixIcon: const Icon(Icons.search),
+                            suffixIcon: _searchQuery.isNotEmpty
+                                ? IconButton(
+                                    icon: const Icon(Icons.clear),
+                                    onPressed: () {
+                                      _searchController.clear();
+                                      setState(() => _searchQuery = '');
+                                    },
+                                  )
+                                : null,
+                            border: const OutlineInputBorder(),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
+                          ),
+                          onChanged: (value) {
+                            setState(() => _searchQuery = value.toLowerCase());
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 16),
 
-                if (filteredBooks.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.library_books_outlined,
-                          size: 64,
-                          color: Colors.grey.shade400,
+                      // Status Filter
+                      SizedBox(
+                        width: 150,
+                        child: DropdownButtonFormField<String>(
+                          value: _statusFilter,
+                          decoration: const InputDecoration(
+                            labelText: 'Status',
+                            border: OutlineInputBorder(),
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 12,
+                            ),
+                          ),
+                          items: const [
+                            DropdownMenuItem(value: null, child: Text('All')),
+                            DropdownMenuItem(
+                                value: 'available', child: Text('Available')),
+                            DropdownMenuItem(
+                                value: 'borrowed', child: Text('Borrowed')),
+                          ],
+                          onChanged: (value) {
+                            setState(() => _statusFilter = value);
+                          },
                         ),
-                        const SizedBox(height: 16),
-                        Text(
-                          books.isEmpty
-                              ? 'No books in catalog'
-                              : 'No books match your filters',
-                          style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Data Table
+                Expanded(
+                  child: allBooksAsync.when(
+                    data: (books) {
+                      final filteredBooks = _filterAndSortBooks(books);
+
+                      if (filteredBooks.isEmpty) {
+                        return Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.library_books_outlined,
+                                size: 64,
+                                color: Colors.grey.shade400,
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                books.isEmpty
+                                    ? 'No books in catalog'
+                                    : 'No books match your filters',
+                                style: Theme.of(context).textTheme.titleMedium,
+                              ),
+                              if (books.isEmpty) ...[
+                                const SizedBox(height: 16),
+                                FilledButton.icon(
+                                  onPressed: () => _showBookDialog(context, ref),
+                                  icon: const Icon(Icons.add),
+                                  label: const Text('Add First Book'),
+                                ),
+                              ],
+                            ],
+                          ),
+                        );
+                      }
+
+                      return SingleChildScrollView(
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: _buildDataTable(context, ref, filteredBooks),
                         ),
-                        if (books.isEmpty) ...[
+                      );
+                    },
+                    loading: () => const Center(child: CircularProgressIndicator()),
+                    error: (error, _) => Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.error_outline, size: 64, color: Colors.red),
                           const SizedBox(height: 16),
-                          FilledButton.icon(
-                            onPressed: () => _showBookDialog(context, ref),
-                            icon: const Icon(Icons.add),
-                            label: const Text('Add First Book'),
+                          Text('Error: $error'),
+                          const SizedBox(height: 16),
+                          ElevatedButton(
+                            onPressed: () => ref.invalidate(allBooksProvider),
+                            child: const Text('Retry'),
                           ),
                         ],
-                      ],
+                      ),
                     ),
-                  );
-                }
-
-                return SingleChildScrollView(
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: _buildDataTable(context, ref, filteredBooks),
                   ),
-                );
-              },
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (error, _) => Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.error_outline, size: 64, color: Colors.red),
-                    const SizedBox(height: 16),
-                    Text('Error: $error'),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: () => ref.invalidate(allBooksProvider),
-                      child: const Text('Retry'),
-                    ),
-                  ],
                 ),
-              ),
+              ],
             ),
           ),
         ],
@@ -249,9 +244,9 @@ class _AdminBooksScreenState extends ConsumerState<AdminBooksScreen> {
         return false;
       }
 
-      // Category filter
-      if (_categoryFilter != null &&
-          !book.categories.contains(_categoryFilter)) {
+      // Category filter (tree-based)
+      if (_selectedTreeCategories.isNotEmpty &&
+          !book.categories.any((cat) => _selectedTreeCategories.contains(cat))) {
         return false;
       }
 
@@ -598,19 +593,6 @@ class _BookFormDialogState extends State<BookFormDialog> {
   late BookStatus _status;
   late List<String> _selectedCategories;
 
-  final List<String> _allCategories = [
-    'Fiction',
-    'Non-Fiction',
-    'Science',
-    'History',
-    'Biography',
-    'Romance',
-    'Mystery',
-    'Technology',
-    'Self-Help',
-    'Children',
-  ];
-
   @override
   void initState() {
     super.initState();
@@ -869,7 +851,7 @@ class _BookFormDialogState extends State<BookFormDialog> {
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
-                  children: _allCategories.map((category) {
+                  children: AppConstants.bookCategories.map((category) {
                     final isSelected = _selectedCategories.contains(category);
                     return FilterChip(
                       label: Text(category),

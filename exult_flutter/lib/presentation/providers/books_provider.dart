@@ -41,7 +41,7 @@ final booksByCategoryProvider = FutureProvider.family<List<Book>, String>((ref, 
   return bookRepository.getBooksByCategory(category);
 });
 
-/// State notifier for managing selected category filter
+/// State notifier for managing selected category filter (single)
 class CategoryFilterNotifier extends StateNotifier<String?> {
   CategoryFilterNotifier() : super(null);
 
@@ -54,10 +54,13 @@ class CategoryFilterNotifier extends StateNotifier<String?> {
   }
 }
 
-/// Provider for category filter state
+/// Provider for category filter state (single, legacy)
 final categoryFilterProvider = StateNotifierProvider<CategoryFilterNotifier, String?>((ref) {
   return CategoryFilterNotifier();
 });
+
+/// Provider for selected categories set (tree-based multi-select)
+final selectedCategoriesProvider = StateProvider<Set<String>>((ref) => {});
 
 /// Provider for filtered books based on selected category
 final filteredBooksProvider = StreamProvider<List<Book>>((ref) {
@@ -71,4 +74,26 @@ final filteredBooksProvider = StreamProvider<List<Book>>((ref) {
     // Return books filtered by category as a stream
     return Stream.fromFuture(bookRepository.getBooksByCategory(category));
   }
+});
+
+/// Provider that collects all distinct category names across all books.
+final allBookCategoriesProvider = Provider<Set<String>>((ref) {
+  final booksAsync = ref.watch(availableBooksProvider);
+  final books = booksAsync.valueOrNull ?? [];
+  final categories = <String>{};
+  for (final book in books) {
+    categories.addAll(book.categories);
+  }
+  return categories;
+});
+
+/// Provider that collects all distinct category names across ALL books (admin).
+final allBookCategoriesAdminProvider = Provider<Set<String>>((ref) {
+  final booksAsync = ref.watch(allBooksProvider);
+  final books = booksAsync.valueOrNull ?? [];
+  final categories = <String>{};
+  for (final book in books) {
+    categories.addAll(book.categories);
+  }
+  return categories;
 });

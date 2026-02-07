@@ -36,7 +36,7 @@ class AdminUserDetailScreen extends ConsumerWidget {
         title: const Text('User Details'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go(RouteConstants.admin),
+          onPressed: () => context.go(RouteConstants.adminSubscribers),
         ),
       ),
       body: userDetailsAsync.when(

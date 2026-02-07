@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -36,20 +37,29 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
 
     if (mounted) {
       final authState = ref.read(authControllerProvider);
-      authState.when(
-        data: (_) {
-          context.go(RouteConstants.books);
-        },
-        error: (error, _) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(error.toString()),
-              backgroundColor: Theme.of(context).colorScheme.error,
-            ),
-          );
-        },
-        loading: () {},
-      );
+      if (authState.hasError) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(authState.error.toString()),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      } else if (!authState.isLoading) {
+        // Use synchronous FirebaseAuth.currentUser instead of the stream
+        final firebaseUser = FirebaseAuth.instance.currentUser;
+        if (firebaseUser != null) {
+          // Fetch user role from Firestore
+          final userRepo = ref.read(userRepositoryProvider);
+          final userModel = await userRepo.getUserById(firebaseUser.uid);
+          if (mounted) {
+            if (userModel?.isAdmin == true) {
+              context.go(RouteConstants.admin);
+            } else {
+              context.go(RouteConstants.books);
+            }
+          }
+        }
+      }
     }
   }
 

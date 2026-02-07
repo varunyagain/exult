@@ -52,20 +52,17 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
 
     if (mounted) {
       final authState = ref.read(authControllerProvider);
-      authState.when(
-        data: (_) {
-          context.go(RouteConstants.books);
-        },
-        error: (error, _) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(error.toString()),
-              backgroundColor: Theme.of(context).colorScheme.error,
-            ),
-          );
-        },
-        loading: () {},
-      );
+      if (authState.hasError) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(authState.error.toString()),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      } else if (!authState.isLoading) {
+        // Sign-up always creates subscribers, navigate directly
+        context.go(RouteConstants.books);
+      }
     }
   }
 

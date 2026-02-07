@@ -14,9 +14,12 @@ import 'package:exult_flutter/presentation/screens/pricing/pricing_screen.dart';
 import 'package:exult_flutter/presentation/screens/how_it_works/how_it_works_screen.dart';
 import 'package:exult_flutter/presentation/screens/contact/contact_us_screen.dart';
 import 'package:exult_flutter/presentation/screens/subscribe/subscribe_screen.dart';
+import 'package:exult_flutter/presentation/screens/admin/admin_shell.dart';
+import 'package:exult_flutter/presentation/screens/admin/admin_dashboard_screen.dart';
 import 'package:exult_flutter/presentation/screens/admin/admin_users_screen.dart';
 import 'package:exult_flutter/presentation/screens/admin/admin_user_detail_screen.dart';
 import 'package:exult_flutter/presentation/screens/admin/admin_books_screen.dart';
+import 'package:exult_flutter/presentation/screens/admin/admin_financials_screen.dart';
 
 /// Provider for the router configuration
 final routerProvider = Provider<GoRouter>((ref) {
@@ -35,7 +38,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         return RouteConstants.signIn;
       }
 
-      // Redirect to books if trying to access auth routes while already authenticated
+      // Redirect away from auth routes when already authenticated
       if (isAuthenticated && isAuthRoute) {
         return RouteConstants.books;
       }
@@ -118,26 +121,43 @@ final routerProvider = Provider<GoRouter>((ref) {
         ),
       ),
 
-      // Admin routes (require authentication + admin role)
-      GoRoute(
-        path: RouteConstants.admin,
-        pageBuilder: (context, state) => const MaterialPage(
-          child: AdminUsersScreen(),
-        ),
+      // Admin routes (require authentication + admin role) — wrapped in ShellRoute
+      ShellRoute(
+        builder: (context, state, child) => AdminShell(child: child),
         routes: [
           GoRoute(
-            path: 'users/:userId',
-            pageBuilder: (context, state) {
-              final userId = state.pathParameters['userId']!;
-              return MaterialPage(
-                child: AdminUserDetailScreen(userId: userId),
-              );
-            },
+            path: RouteConstants.admin,
+            pageBuilder: (context, state) => const MaterialPage(
+              child: AdminDashboardScreen(),
+            ),
           ),
           GoRoute(
-            path: 'books',
+            path: RouteConstants.adminSubscribers,
+            pageBuilder: (context, state) => const MaterialPage(
+              child: AdminUsersScreen(),
+            ),
+            routes: [
+              GoRoute(
+                path: ':userId',
+                pageBuilder: (context, state) {
+                  final userId = state.pathParameters['userId']!;
+                  return MaterialPage(
+                    child: AdminUserDetailScreen(userId: userId),
+                  );
+                },
+              ),
+            ],
+          ),
+          GoRoute(
+            path: RouteConstants.adminBooks,
             pageBuilder: (context, state) => const MaterialPage(
               child: AdminBooksScreen(),
+            ),
+          ),
+          GoRoute(
+            path: RouteConstants.adminFinancials,
+            pageBuilder: (context, state) => const MaterialPage(
+              child: AdminFinancialsScreen(),
             ),
           ),
         ],
@@ -176,6 +196,9 @@ bool _isProtectedRoute(String location) {
     RouteConstants.loans,
     RouteConstants.subscribe,
     RouteConstants.admin,
+    RouteConstants.adminSubscribers,
+    RouteConstants.adminBooks,
+    RouteConstants.adminFinancials,
   ];
 
   return protectedRoutes.any((route) => location.startsWith(route));
