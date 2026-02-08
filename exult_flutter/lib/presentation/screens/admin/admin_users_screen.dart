@@ -151,12 +151,6 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
                 ),
               ),
 
-              // Summary Cards
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: _buildSummaryCards(context, users),
-              ),
-
               // Data Table
               Expanded(
                 child: () {
@@ -207,40 +201,6 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildSummaryCards(
-      BuildContext context, List<UserWithDetails> users) {
-    final totalUsers = users.length;
-    final activeSubscribers =
-        users.where((u) => u.hasActiveSubscription).length;
-    final totalBorrowedBooks =
-        users.fold<int>(0, (sum, u) => sum + u.activeLoanCount);
-
-    return Wrap(
-      spacing: 16,
-      runSpacing: 16,
-      children: [
-        _SummaryCard(
-          icon: Icons.people,
-          label: 'Total Users',
-          value: '$totalUsers',
-          color: Theme.of(context).primaryColor,
-        ),
-        _SummaryCard(
-          icon: Icons.card_membership,
-          label: 'Active Subscribers',
-          value: '$activeSubscribers',
-          color: Colors.green,
-        ),
-        _SummaryCard(
-          icon: Icons.book,
-          label: 'Books Borrowed',
-          value: '$totalBorrowedBooks',
-          color: Colors.orange,
-        ),
-      ],
     );
   }
 
@@ -565,51 +525,6 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
         }
       }
     }
-  }
-}
-
-class _SummaryCard extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-  final Color color;
-
-  const _SummaryCard({
-    required this.icon,
-    required this.label,
-    required this.value,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: Container(
-        width: 200,
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(icon, size: 32, color: color),
-            const SizedBox(height: 12),
-            Text(
-              value,
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: color,
-                  ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).textTheme.bodySmall?.color,
-                  ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }
 

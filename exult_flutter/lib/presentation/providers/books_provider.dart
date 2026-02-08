@@ -62,6 +62,9 @@ final categoryFilterProvider = StateNotifierProvider<CategoryFilterNotifier, Str
 /// Provider for selected categories set (tree-based multi-select)
 final selectedCategoriesProvider = StateProvider<Set<String>>((ref) => {});
 
+/// Provider for selected genres set (tree-based multi-select)
+final selectedGenresProvider = StateProvider<Set<String>>((ref) => {});
+
 /// Provider for filtered books based on selected category
 final filteredBooksProvider = StreamProvider<List<Book>>((ref) {
   final category = ref.watch(categoryFilterProvider);
@@ -96,4 +99,26 @@ final allBookCategoriesAdminProvider = Provider<Set<String>>((ref) {
     categories.addAll(book.categories);
   }
   return categories;
+});
+
+/// Provider that collects all distinct genre names across available books.
+final allBookGenresProvider = Provider<Set<String>>((ref) {
+  final booksAsync = ref.watch(availableBooksProvider);
+  final books = booksAsync.valueOrNull ?? [];
+  final genres = <String>{};
+  for (final book in books) {
+    genres.addAll(book.genres);
+  }
+  return genres;
+});
+
+/// Provider that collects all distinct genre names across ALL books (admin).
+final allBookGenresAdminProvider = Provider<Set<String>>((ref) {
+  final booksAsync = ref.watch(allBooksProvider);
+  final books = booksAsync.valueOrNull ?? [];
+  final genres = <String>{};
+  for (final book in books) {
+    genres.addAll(book.genres);
+  }
+  return genres;
 });

@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:exult_flutter/core/constants/route_constants.dart';
+import 'package:exult_flutter/core/constants/genre_tree.dart';
 import 'package:exult_flutter/domain/models/book_model.dart';
 import 'package:exult_flutter/presentation/providers/admin_provider.dart';
 import 'package:exult_flutter/presentation/providers/books_provider.dart';
-import 'package:exult_flutter/presentation/widgets/category_tree_widget.dart';
+import 'package:exult_flutter/presentation/widgets/attribute_tree_widget.dart';
 import 'package:intl/intl.dart';
 
 class AdminBooksScreen extends ConsumerStatefulWidget {
@@ -20,6 +21,7 @@ class _AdminBooksScreenState extends ConsumerState<AdminBooksScreen> {
   String _searchQuery = '';
   String? _statusFilter;
   Set<String> _selectedTreeCategories = {};
+  Set<String> _selectedTreeGenres = {};
   String _sortColumn = 'title';
   bool _sortAscending = true;
 
@@ -112,9 +114,17 @@ class _AdminBooksScreenState extends ConsumerState<AdminBooksScreen> {
                         width: 200,
                         child: InkWell(
                           onTap: () async {
-                            final result = await CategoryPickerDialog.show(
-                              context,
-                              _selectedTreeCategories,
+                            final bookCategories =
+                                ref.read(allBookCategoriesAdminProvider);
+                            final result = await showDialog<Set<String>>(
+                              context: context,
+                              builder: (_) => AttributePickerDialog(
+                                initialSelection:
+                                    _selectedTreeCategories.isEmpty
+                                        ? bookCategories
+                                        : _selectedTreeCategories,
+                                allNames: bookCategories,
+                              ),
                             );
                             if (result != null) {
                               setState(() => _selectedTreeCategories = result);
@@ -134,6 +144,51 @@ class _AdminBooksScreenState extends ConsumerState<AdminBooksScreen> {
                               _selectedTreeCategories.isEmpty
                                   ? 'All'
                                   : '${_selectedTreeCategories.length} selected',
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+
+                      // Genre Filter
+                      SizedBox(
+                        width: 200,
+                        child: InkWell(
+                          onTap: () async {
+                            final bookGenres =
+                                ref.read(allBookGenresAdminProvider);
+                            final result = await showDialog<Set<String>>(
+                              context: context,
+                              builder: (_) => AttributePickerDialog(
+                                initialSelection:
+                                    _selectedTreeGenres.isEmpty
+                                        ? bookGenres
+                                        : _selectedTreeGenres,
+                                treeData: writingGenreTree,
+                                allNames: bookGenres,
+                                title: 'Select Genres',
+                                icon: Icons.auto_stories,
+                              ),
+                            );
+                            if (result != null) {
+                              setState(() => _selectedTreeGenres = result);
+                            }
+                          },
+                          child: InputDecorator(
+                            decoration: const InputDecoration(
+                              labelText: 'Genres',
+                              border: OutlineInputBorder(),
+                              contentPadding: EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 12,
+                              ),
+                              suffixIcon: Icon(Icons.arrow_drop_down),
+                            ),
+                            child: Text(
+                              _selectedTreeGenres.isEmpty
+                                  ? 'All'
+                                  : '${_selectedTreeGenres.length} selected',
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
@@ -257,6 +312,12 @@ class _AdminBooksScreenState extends ConsumerState<AdminBooksScreen> {
         return false;
       }
 
+      // Genre filter (tree-based)
+      if (_selectedTreeGenres.isNotEmpty &&
+          !book.genres.any((g) => _selectedTreeGenres.contains(g))) {
+        return false;
+      }
+
       return true;
     }).toList();
 
@@ -316,6 +377,7 @@ class _AdminBooksScreenState extends ConsumerState<AdminBooksScreen> {
         ),
         const DataColumn(label: Text('ISBN')),
         const DataColumn(label: Text('Categories')),
+        const DataColumn(label: Text('Genres')),
         DataColumn(
           label: const Text('Status'),
           onSort: (_, ascending) => _onSort('status', ascending),
@@ -389,6 +451,34 @@ class _AdminBooksScreenState extends ConsumerState<AdminBooksScreen> {
                 ),
               ),
             ),
+            DataCell(
+              SizedBox(
+                width: 150,
+                child: Wrap(
+                  spacing: 4,
+                  runSpacing: 4,
+                  children: book.genres.take(2).map((genre) {
+                    return Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.deepPurple.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        genre,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: Colors.deepPurple,
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+            ),
             DataCell(_buildStatusBadge(context, book.status)),
             DataCell(Text('${book.totalCopies}')),
             DataCell(
@@ -439,13 +529,13 @@ class _AdminBooksScreenState extends ConsumerState<AdminBooksScreen> {
       case 'author':
         return 1;
       case 'status':
-        return 4;
-      case 'copies':
         return 5;
-      case 'available':
+      case 'copies':
         return 6;
-      case 'deposit':
+      case 'available':
         return 7;
+      case 'deposit':
+        return 8;
       default:
         return 0;
     }
@@ -599,6 +689,7 @@ class _BookFormDialogState extends State<BookFormDialog> {
   late BookOwnerType _ownerType;
   late BookStatus _status;
   late List<String> _selectedCategories;
+  late List<String> _selectedGenres;
 
   @override
   void initState() {
@@ -621,6 +712,7 @@ class _BookFormDialogState extends State<BookFormDialog> {
     _ownerType = book?.ownerType ?? BookOwnerType.business;
     _status = book?.status ?? BookStatus.available;
     _selectedCategories = book?.categories.toList() ?? [];
+    _selectedGenres = book?.genres.toList() ?? [];
   }
 
   @override
@@ -859,7 +951,7 @@ class _BookFormDialogState extends State<BookFormDialog> {
                     const Spacer(),
                     TextButton.icon(
                       onPressed: () async {
-                        final result = await CategoryPickerDialog.show(
+                        final result = await AttributePickerDialog.show(
                           context,
                           _selectedCategories.toSet(),
                         );
@@ -900,6 +992,59 @@ class _BookFormDialogState extends State<BookFormDialog> {
                       );
                     }).toList(),
                   ),
+                const SizedBox(height: 16),
+
+                // Genres
+                Row(
+                  children: [
+                    Text(
+                      'Genres',
+                      style: Theme.of(context).textTheme.titleSmall,
+                    ),
+                    const Spacer(),
+                    TextButton.icon(
+                      onPressed: () async {
+                        final result = await AttributePickerDialog.showGenre(
+                          context,
+                          _selectedGenres.toSet(),
+                        );
+                        if (result != null) {
+                          setState(() {
+                            _selectedGenres = result.toList();
+                          });
+                        }
+                      },
+                      icon: const Icon(Icons.edit, size: 18),
+                      label: const Text('Select'),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                if (_selectedGenres.isEmpty)
+                  Text(
+                    'No genres selected',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Colors.grey,
+                        ),
+                  )
+                else
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: _selectedGenres.map((genre) {
+                      return Chip(
+                        label: Text(genre, style: const TextStyle(fontSize: 12)),
+                        deleteIcon: const Icon(Icons.close, size: 16),
+                        onDeleted: () {
+                          setState(() {
+                            _selectedGenres.remove(genre);
+                          });
+                        },
+                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        visualDensity: VisualDensity.compact,
+                      );
+                    }).toList(),
+                  ),
               ],
             ),
           ),
@@ -933,6 +1078,7 @@ class _BookFormDialogState extends State<BookFormDialog> {
             : _coverUrlController.text.trim(),
         ownerType: _ownerType,
         categories: _selectedCategories,
+        genres: _selectedGenres,
         depositAmount: double.parse(_depositController.text),
         status: _status,
         totalCopies: int.parse(_totalCopiesController.text),

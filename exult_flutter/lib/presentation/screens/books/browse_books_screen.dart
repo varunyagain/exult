@@ -6,8 +6,9 @@ import 'package:exult_flutter/presentation/providers/admin_provider.dart';
 import 'package:exult_flutter/presentation/providers/auth_provider.dart';
 import 'package:exult_flutter/presentation/providers/books_provider.dart';
 import 'package:exult_flutter/presentation/providers/subscription_provider.dart';
+import 'package:exult_flutter/core/constants/genre_tree.dart';
 import 'package:exult_flutter/presentation/widgets/cards/book_card.dart';
-import 'package:exult_flutter/presentation/widgets/category_tree_widget.dart';
+import 'package:exult_flutter/presentation/widgets/attribute_tree_widget.dart';
 
 class BrowseBooksScreen extends ConsumerStatefulWidget {
   const BrowseBooksScreen({super.key});
@@ -19,6 +20,8 @@ class BrowseBooksScreen extends ConsumerStatefulWidget {
 class _BrowseBooksScreenState extends ConsumerState<BrowseBooksScreen> {
   final TextEditingController _searchController = TextEditingController();
   bool _isSearching = false;
+  bool _categoriesInitialized = false;
+  bool _genresInitialized = false;
 
   @override
   void dispose() {
@@ -33,6 +36,29 @@ class _BrowseBooksScreenState extends ConsumerState<BrowseBooksScreen> {
     final isAdmin = ref.watch(isAdminProvider);
     final selectedCategories = ref.watch(selectedCategoriesProvider);
     final categoriesWithBooks = ref.watch(allBookCategoriesProvider);
+    final selectedGenres = ref.watch(selectedGenresProvider);
+    final genresWithBooks = ref.watch(allBookGenresProvider);
+
+    // Auto-select all attribute values on first load so the tree shows
+    // every node with books as checked (leaf → selected, parents → derived).
+    if (!_categoriesInitialized && categoriesWithBooks.isNotEmpty) {
+      _categoriesInitialized = true;
+      if (selectedCategories.isEmpty) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          ref.read(selectedCategoriesProvider.notifier).state =
+              Set.from(categoriesWithBooks);
+        });
+      }
+    }
+    if (!_genresInitialized && genresWithBooks.isNotEmpty) {
+      _genresInitialized = true;
+      if (selectedGenres.isEmpty) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          ref.read(selectedGenresProvider.notifier).state =
+              Set.from(genresWithBooks);
+        });
+      }
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -118,7 +144,7 @@ class _BrowseBooksScreenState extends ConsumerState<BrowseBooksScreen> {
               Expanded(
                 child: Row(
                   children: [
-                    // Category tree sidebar
+                    // Filter sidebar
                     Container(
                       width: 240,
                       decoration: BoxDecoration(
@@ -128,13 +154,35 @@ class _BrowseBooksScreenState extends ConsumerState<BrowseBooksScreen> {
                           ),
                         ),
                       ),
-                      child: CategoryTreeWidget(
-                        categoriesWithBooks: categoriesWithBooks,
-                        selectedCategories: selectedCategories,
-                        onSelectionChanged: (newSelection) {
-                          ref.read(selectedCategoriesProvider.notifier).state =
-                              newSelection;
-                        },
+                      child: Column(
+                        children: [
+                          // Category tree
+                          Expanded(
+                            child: AttributeTreeWidget(
+                              availableValues: categoriesWithBooks,
+                              selectedValues: selectedCategories,
+                              onSelectionChanged: (newSelection) {
+                                ref.read(selectedCategoriesProvider.notifier).state =
+                                    newSelection;
+                              },
+                            ),
+                          ),
+                          const Divider(height: 1),
+                          // Genre tree
+                          Expanded(
+                            child: AttributeTreeWidget(
+                              treeData: writingGenreTree,
+                              title: 'Genres',
+                              icon: Icons.auto_stories,
+                              availableValues: genresWithBooks,
+                              selectedValues: selectedGenres,
+                              onSelectionChanged: (newSelection) {
+                                ref.read(selectedGenresProvider.notifier).state =
+                                    newSelection;
+                              },
+                            ),
+                          ),
+                        ],
                       ),
                     ),
 
@@ -145,9 +193,17 @@ class _BrowseBooksScreenState extends ConsumerState<BrowseBooksScreen> {
                           // Apply category filter
                           var filteredBooks = books;
                           if (selectedCategories.isNotEmpty) {
-                            filteredBooks = books.where((book) {
+                            filteredBooks = filteredBooks.where((book) {
                               return book.categories.any(
                                   (cat) => selectedCategories.contains(cat));
+                            }).toList();
+                          }
+
+                          // Apply genre filter
+                          if (selectedGenres.isNotEmpty) {
+                            filteredBooks = filteredBooks.where((book) {
+                              return book.genres.any(
+                                  (g) => selectedGenres.contains(g));
                             }).toList();
                           }
 
@@ -184,8 +240,8 @@ class _BrowseBooksScreenState extends ConsumerState<BrowseBooksScreen> {
                                   Text(
                                     _isSearching
                                         ? 'No books found'
-                                        : selectedCategories.isNotEmpty
-                                            ? 'No books in selected categories'
+                                        : (selectedCategories.isNotEmpty || selectedGenres.isNotEmpty)
+                                            ? 'No books match selected filters'
                                             : 'No books available',
                                     style: Theme.of(context)
                                         .textTheme
@@ -195,8 +251,8 @@ class _BrowseBooksScreenState extends ConsumerState<BrowseBooksScreen> {
                                   Text(
                                     _isSearching
                                         ? 'Try a different search term'
-                                        : selectedCategories.isNotEmpty
-                                            ? 'Try selecting different categories'
+                                        : (selectedCategories.isNotEmpty || selectedGenres.isNotEmpty)
+                                            ? 'Try selecting different filters'
                                             : 'Check back later for new arrivals',
                                     style: Theme.of(context)
                                         .textTheme
