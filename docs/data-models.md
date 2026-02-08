@@ -26,7 +26,8 @@ Fields:
   description: String
   coverImageUrl: String?
   ownerType: BookOwnerType # business | user
-  categories: List<String> # ECORFAN categories
+  categories: List<String> # ECORFAN categories (must match tree node names)
+  genres: List<String>     # Writing genre tree (must match tree node names)
   depositAmount: double    # INR
   status: BookStatus       # available | borrowed
   totalCopies: int
@@ -35,6 +36,27 @@ Fields:
 
 Computed:
   isAvailable → status == BookStatus.available
+```
+
+## AttributeNode (`core/constants/category_tree.dart`)
+```
+Generic tree node used by both ECORFAN category tree and writing genre tree.
+
+Fields:
+  name: String
+  children: List<AttributeNode>
+
+Computed:
+  allLeafNames → all leaf-level names in subtree
+  allNames → all names in subtree (self + descendants)
+
+Trees defined:
+  ecorfanCategoryTree (category_tree.dart) - ECORFAN ISBN classification
+  writingGenreTree (genre_tree.dart) - Wikipedia writing genres
+
+Helper getters:
+  allCategoryNames → flat list from ecorfanCategoryTree
+  allGenreNames → flat list from writingGenreTree
 ```
 
 ## Loan (`domain/models/loan_model.dart`)

@@ -21,10 +21,14 @@
 - `bookByIdProvider(bookId)` - FutureProvider.family<Book, String>
 - `bookSearchProvider(query)` - FutureProvider.family<List<Book>, String>
 - `booksByCategoryProvider(category)` - FutureProvider.family
-- `categoryFilterProvider` - StateProvider<String?> - Single category filter
-- `selectedCategoriesProvider` - StateProvider<Set<String>> - Multi-select
-- `filteredBooksProvider` - Provider<AsyncValue<List<Book>>> - Filtered results
-- `allBookCategoriesProvider` - Provider<AsyncValue<List<String>>>
+- `categoryFilterProvider` - StateNotifierProvider<CategoryFilterNotifier, String?> - Single category filter (legacy)
+- `selectedCategoriesProvider` - StateProvider<Set<String>> - Multi-select categories
+- `selectedGenresProvider` - StateProvider<Set<String>> - Multi-select genres
+- `filteredBooksProvider` - StreamProvider<List<Book>> - Filtered by single category
+- `allBookCategoriesProvider` - Provider<Set<String>> - Distinct categories from available books
+- `allBookCategoriesAdminProvider` - Provider<Set<String>> - Distinct categories from ALL books (admin)
+- `allBookGenresProvider` - Provider<Set<String>> - Distinct genres from available books
+- `allBookGenresAdminProvider` - Provider<Set<String>> - Distinct genres from ALL books (admin)
 
 ## Subscription Providers (`presentation/providers/subscription_provider.dart`)
 - `activeSubscriptionProvider` - StreamProvider<Subscription?>
