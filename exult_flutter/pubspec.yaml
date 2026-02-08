@@ -46,9 +46,11 @@ dependencies:
   # UI
   flutter_svg: ^2.0.9
   cupertino_icons: ^1.0.2
+  fl_chart: ^0.69.0
 
   # Utilities
   intl: ^0.18.1
+  uuid: ^4.2.1
 
 dev_dependencies:
   flutter_test:
