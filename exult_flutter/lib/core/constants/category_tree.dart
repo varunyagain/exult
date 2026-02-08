@@ -2,11 +2,11 @@
 /// Based on https://www.ecorfan.org/ISBN/Clasificaci%C3%B3n%20de%20ISBN_ECORFAN_En.pdf
 /// Follows Dewey Decimal Classification structure.
 
-class CategoryNode {
+class AttributeNode {
   final String name;
-  final List<CategoryNode> children;
+  final List<AttributeNode> children;
 
-  const CategoryNode(this.name, [this.children = const []]);
+  const AttributeNode(this.name, [this.children = const []]);
 
   /// Returns all leaf-level category names in this subtree (including self if leaf).
   List<String> get allLeafNames {
@@ -20,294 +20,294 @@ class CategoryNode {
   }
 }
 
-const List<CategoryNode> ecorfanCategoryTree = [
+const List<AttributeNode> ecorfanCategoryTree = [
   // 0 - Generalities
-  CategoryNode('Generalities', [
-    CategoryNode('Knowledge & Intellectual Life'),
-    CategoryNode('Computer Science', [
-      CategoryNode('Programming & Software'),
-      CategoryNode('Artificial Intelligence'),
+  AttributeNode('Generalities', [
+    AttributeNode('Knowledge & Intellectual Life'),
+    AttributeNode('Computer Science', [
+      AttributeNode('Programming & Software'),
+      AttributeNode('Artificial Intelligence'),
     ]),
-    CategoryNode('Bibliography & Librarianship'),
-    CategoryNode('Encyclopedic Works'),
-    CategoryNode('Museology'),
-    CategoryNode('Journalism & Publishing'),
-    CategoryNode('Manuscripts & Rare Books'),
+    AttributeNode('Bibliography & Librarianship'),
+    AttributeNode('Encyclopedic Works'),
+    AttributeNode('Museology'),
+    AttributeNode('Journalism & Publishing'),
+    AttributeNode('Manuscripts & Rare Books'),
   ]),
 
   // 100 - Philosophy and Psychology
-  CategoryNode('Philosophy & Psychology', [
-    CategoryNode('Metaphysics'),
-    CategoryNode('Epistemology'),
-    CategoryNode('Parapsychology & Occultism'),
-    CategoryNode('Philosophical Schools'),
-    CategoryNode('Psychology', [
-      CategoryNode('Mental Processes & Intelligence'),
-      CategoryNode('Subconscious & Altered States'),
-      CategoryNode('Developmental Psychology'),
-      CategoryNode('Comparative Psychology'),
-      CategoryNode('Applied Psychology'),
+  AttributeNode('Philosophy & Psychology', [
+    AttributeNode('Metaphysics'),
+    AttributeNode('Epistemology'),
+    AttributeNode('Parapsychology & Occultism'),
+    AttributeNode('Philosophical Schools'),
+    AttributeNode('Psychology', [
+      AttributeNode('Mental Processes & Intelligence'),
+      AttributeNode('Subconscious & Altered States'),
+      AttributeNode('Developmental Psychology'),
+      AttributeNode('Comparative Psychology'),
+      AttributeNode('Applied Psychology'),
     ]),
-    CategoryNode('Logic'),
-    CategoryNode('Ethics & Moral Philosophy'),
-    CategoryNode('Ancient & Medieval Philosophy'),
-    CategoryNode('Modern Western Philosophy'),
+    AttributeNode('Logic'),
+    AttributeNode('Ethics & Moral Philosophy'),
+    AttributeNode('Ancient & Medieval Philosophy'),
+    AttributeNode('Modern Western Philosophy'),
   ]),
 
   // 200 - Religion
-  CategoryNode('Religion', [
-    CategoryNode('Philosophy of Religion'),
-    CategoryNode('The Bible'),
-    CategoryNode('Christianity & Christian Theology'),
-    CategoryNode('Christian Morality'),
-    CategoryNode('Christian Orders & Local Church'),
-    CategoryNode('History of Christianity'),
-    CategoryNode('Comparative Religion'),
-    CategoryNode('Buddhism'),
-    CategoryNode('Hinduism'),
-    CategoryNode('Judaism'),
-    CategoryNode('Islam'),
-    CategoryNode('Other Religions'),
+  AttributeNode('Religion', [
+    AttributeNode('Philosophy of Religion'),
+    AttributeNode('The Bible'),
+    AttributeNode('Christianity & Christian Theology'),
+    AttributeNode('Christian Morality'),
+    AttributeNode('Christian Orders & Local Church'),
+    AttributeNode('History of Christianity'),
+    AttributeNode('Comparative Religion'),
+    AttributeNode('Buddhism'),
+    AttributeNode('Hinduism'),
+    AttributeNode('Judaism'),
+    AttributeNode('Islam'),
+    AttributeNode('Other Religions'),
   ]),
 
   // 300 - Social Sciences
-  CategoryNode('Social Sciences', [
-    CategoryNode('Sociology & Anthropology'),
-    CategoryNode('Social Interaction & Communication'),
-    CategoryNode('Social Groups & Culture'),
-    CategoryNode('Statistics'),
-    CategoryNode('Political Science', [
-      CategoryNode('Political Ideologies'),
-      CategoryNode('International Relations'),
-      CategoryNode('Legislative Process'),
+  AttributeNode('Social Sciences', [
+    AttributeNode('Sociology & Anthropology'),
+    AttributeNode('Social Interaction & Communication'),
+    AttributeNode('Social Groups & Culture'),
+    AttributeNode('Statistics'),
+    AttributeNode('Political Science', [
+      AttributeNode('Political Ideologies'),
+      AttributeNode('International Relations'),
+      AttributeNode('Legislative Process'),
     ]),
-    CategoryNode('Economics', [
-      CategoryNode('Labor Economics'),
-      CategoryNode('Financial Economics'),
-      CategoryNode('Land & Energy Economics'),
-      CategoryNode('Public Finance'),
-      CategoryNode('Production & Industry'),
-      CategoryNode('Macroeconomics'),
+    AttributeNode('Economics', [
+      AttributeNode('Labor Economics'),
+      AttributeNode('Financial Economics'),
+      AttributeNode('Land & Energy Economics'),
+      AttributeNode('Public Finance'),
+      AttributeNode('Production & Industry'),
+      AttributeNode('Macroeconomics'),
     ]),
-    CategoryNode('Law', [
-      CategoryNode('International Law'),
-      CategoryNode('Constitutional & Administrative Law'),
-      CategoryNode('Criminal Law'),
-      CategoryNode('Private & Commercial Law'),
+    AttributeNode('Law', [
+      AttributeNode('International Law'),
+      AttributeNode('Constitutional & Administrative Law'),
+      AttributeNode('Criminal Law'),
+      AttributeNode('Private & Commercial Law'),
     ]),
-    CategoryNode('Public Administration & Military Science'),
-    CategoryNode('Social Problems & Services', [
-      CategoryNode('Criminology'),
-      CategoryNode('Insurance'),
+    AttributeNode('Public Administration & Military Science'),
+    AttributeNode('Social Problems & Services', [
+      AttributeNode('Criminology'),
+      AttributeNode('Insurance'),
     ]),
-    CategoryNode('Education', [
-      CategoryNode('Primary Education'),
-      CategoryNode('Secondary Education'),
-      CategoryNode('Higher Education'),
+    AttributeNode('Education', [
+      AttributeNode('Primary Education'),
+      AttributeNode('Secondary Education'),
+      AttributeNode('Higher Education'),
     ]),
-    CategoryNode('Commerce & Transport', [
-      CategoryNode('International Trade'),
-      CategoryNode('Telecommunications'),
-      CategoryNode('Transportation'),
+    AttributeNode('Commerce & Transport', [
+      AttributeNode('International Trade'),
+      AttributeNode('Telecommunications'),
+      AttributeNode('Transportation'),
     ]),
-    CategoryNode('Customs, Etiquette & Folklore'),
+    AttributeNode('Customs, Etiquette & Folklore'),
   ]),
 
   // 400 - Languages
-  CategoryNode('Languages', [
-    CategoryNode('Linguistics'),
-    CategoryNode('English'),
-    CategoryNode('Germanic Languages'),
-    CategoryNode('French & Romance Languages'),
-    CategoryNode('Italian & Romanian'),
-    CategoryNode('Spanish & Portuguese'),
-    CategoryNode('Latin & Italic Languages'),
-    CategoryNode('Classical Greek'),
-    CategoryNode('Other Languages', [
-      CategoryNode('Chinese'),
-      CategoryNode('Japanese'),
-      CategoryNode('Native American Languages'),
+  AttributeNode('Languages', [
+    AttributeNode('Linguistics'),
+    AttributeNode('English'),
+    AttributeNode('Germanic Languages'),
+    AttributeNode('French & Romance Languages'),
+    AttributeNode('Italian & Romanian'),
+    AttributeNode('Spanish & Portuguese'),
+    AttributeNode('Latin & Italic Languages'),
+    AttributeNode('Classical Greek'),
+    AttributeNode('Other Languages', [
+      AttributeNode('Chinese'),
+      AttributeNode('Japanese'),
+      AttributeNode('Native American Languages'),
     ]),
   ]),
 
   // 500 - Natural Sciences and Mathematics
-  CategoryNode('Natural Sciences & Mathematics', [
-    CategoryNode('Mathematics', [
-      CategoryNode('Algebra & Number Theory'),
-      CategoryNode('Arithmetic'),
-      CategoryNode('Topology'),
-      CategoryNode('Analysis & Calculus'),
-      CategoryNode('Geometry'),
-      CategoryNode('Probability & Statistics'),
+  AttributeNode('Natural Sciences & Mathematics', [
+    AttributeNode('Mathematics', [
+      AttributeNode('Algebra & Number Theory'),
+      AttributeNode('Arithmetic'),
+      AttributeNode('Topology'),
+      AttributeNode('Analysis & Calculus'),
+      AttributeNode('Geometry'),
+      AttributeNode('Probability & Statistics'),
     ]),
-    CategoryNode('Astronomy'),
-    CategoryNode('Physics', [
-      CategoryNode('Mechanics'),
-      CategoryNode('Fluid Mechanics'),
-      CategoryNode('Sound & Vibrations'),
-      CategoryNode('Light & Optics'),
-      CategoryNode('Heat & Thermodynamics'),
-      CategoryNode('Electricity & Electronics'),
-      CategoryNode('Magnetism'),
-      CategoryNode('Atomic & Nuclear Physics'),
+    AttributeNode('Astronomy'),
+    AttributeNode('Physics', [
+      AttributeNode('Mechanics'),
+      AttributeNode('Fluid Mechanics'),
+      AttributeNode('Sound & Vibrations'),
+      AttributeNode('Light & Optics'),
+      AttributeNode('Heat & Thermodynamics'),
+      AttributeNode('Electricity & Electronics'),
+      AttributeNode('Magnetism'),
+      AttributeNode('Atomic & Nuclear Physics'),
     ]),
-    CategoryNode('Chemistry', [
-      CategoryNode('Physical & Theoretical Chemistry'),
-      CategoryNode('Analytical Chemistry'),
-      CategoryNode('Inorganic Chemistry'),
-      CategoryNode('Organic Chemistry'),
+    AttributeNode('Chemistry', [
+      AttributeNode('Physical & Theoretical Chemistry'),
+      AttributeNode('Analytical Chemistry'),
+      AttributeNode('Inorganic Chemistry'),
+      AttributeNode('Organic Chemistry'),
     ]),
-    CategoryNode('Earth Sciences', [
-      CategoryNode('Geology & Meteorology'),
-      CategoryNode('Oceanography'),
-      CategoryNode('Climatology'),
-      CategoryNode('Mineralogy & Petrology'),
+    AttributeNode('Earth Sciences', [
+      AttributeNode('Geology & Meteorology'),
+      AttributeNode('Oceanography'),
+      AttributeNode('Climatology'),
+      AttributeNode('Mineralogy & Petrology'),
     ]),
-    CategoryNode('Paleontology'),
-    CategoryNode('Life Sciences & Biology', [
-      CategoryNode('Physiology & Anatomy'),
-      CategoryNode('Cell Biology'),
-      CategoryNode('Biochemistry'),
-      CategoryNode('Genetics & Evolution'),
-      CategoryNode('Ecology'),
-      CategoryNode('Microbiology'),
+    AttributeNode('Paleontology'),
+    AttributeNode('Life Sciences & Biology', [
+      AttributeNode('Physiology & Anatomy'),
+      AttributeNode('Cell Biology'),
+      AttributeNode('Biochemistry'),
+      AttributeNode('Genetics & Evolution'),
+      AttributeNode('Ecology'),
+      AttributeNode('Microbiology'),
     ]),
-    CategoryNode('Botany'),
-    CategoryNode('Zoology'),
+    AttributeNode('Botany'),
+    AttributeNode('Zoology'),
   ]),
 
   // 600 - Technology (Applied Sciences)
-  CategoryNode('Technology', [
-    CategoryNode('Medical Sciences', [
-      CategoryNode('Human Anatomy & Physiology'),
-      CategoryNode('Health Promotion & Hygiene'),
-      CategoryNode('Forensic & Preventive Medicine'),
-      CategoryNode('Pharmacology & Therapeutics'),
-      CategoryNode('Diseases & Pathology'),
-      CategoryNode('Surgery'),
-      CategoryNode('Gynecology & Pediatrics'),
+  AttributeNode('Technology', [
+    AttributeNode('Medical Sciences', [
+      AttributeNode('Human Anatomy & Physiology'),
+      AttributeNode('Health Promotion & Hygiene'),
+      AttributeNode('Forensic & Preventive Medicine'),
+      AttributeNode('Pharmacology & Therapeutics'),
+      AttributeNode('Diseases & Pathology'),
+      AttributeNode('Surgery'),
+      AttributeNode('Gynecology & Pediatrics'),
     ]),
-    CategoryNode('Engineering', [
-      CategoryNode('Civil Engineering'),
-      CategoryNode('Electrical & Electronics Engineering'),
-      CategoryNode('Mechanical Engineering'),
-      CategoryNode('Mining'),
-      CategoryNode('Military & Nautical Engineering'),
-      CategoryNode('Hydraulic Engineering'),
-      CategoryNode('Sanitary & Environmental Engineering'),
-      CategoryNode('Astronautics & Robotics'),
+    AttributeNode('Engineering', [
+      AttributeNode('Civil Engineering'),
+      AttributeNode('Electrical & Electronics Engineering'),
+      AttributeNode('Mechanical Engineering'),
+      AttributeNode('Mining'),
+      AttributeNode('Military & Nautical Engineering'),
+      AttributeNode('Hydraulic Engineering'),
+      AttributeNode('Sanitary & Environmental Engineering'),
+      AttributeNode('Astronautics & Robotics'),
     ]),
-    CategoryNode('Agriculture', [
-      CategoryNode('Soil Science & Cultivation'),
-      CategoryNode('Field & Plantation Crops'),
-      CategoryNode('Horticulture'),
-      CategoryNode('Animal Production & Veterinary'),
-      CategoryNode('Forestry'),
-      CategoryNode('Fishing & Conservation'),
+    AttributeNode('Agriculture', [
+      AttributeNode('Soil Science & Cultivation'),
+      AttributeNode('Field & Plantation Crops'),
+      AttributeNode('Horticulture'),
+      AttributeNode('Animal Production & Veterinary'),
+      AttributeNode('Forestry'),
+      AttributeNode('Fishing & Conservation'),
     ]),
-    CategoryNode('Domestic Economy & Food', [
-      CategoryNode('Food & Cooking'),
-      CategoryNode('Housing & Home Equipment'),
-      CategoryNode('Clothing & Personal Care'),
+    AttributeNode('Domestic Economy & Food', [
+      AttributeNode('Food & Cooking'),
+      AttributeNode('Housing & Home Equipment'),
+      AttributeNode('Clothing & Personal Care'),
     ]),
-    CategoryNode('Management & Business', [
-      CategoryNode('Office Services'),
-      CategoryNode('Accounting'),
-      CategoryNode('General Management'),
-      CategoryNode('Marketing & Sales'),
-      CategoryNode('Advertising & Public Relations'),
+    AttributeNode('Management & Business', [
+      AttributeNode('Office Services'),
+      AttributeNode('Accounting'),
+      AttributeNode('General Management'),
+      AttributeNode('Marketing & Sales'),
+      AttributeNode('Advertising & Public Relations'),
     ]),
-    CategoryNode('Chemical Engineering & Biotechnology'),
-    CategoryNode('Manufacturing', [
-      CategoryNode('Metalwork'),
-      CategoryNode('Textiles'),
-      CategoryNode('Printing'),
-      CategoryNode('Construction'),
+    AttributeNode('Chemical Engineering & Biotechnology'),
+    AttributeNode('Manufacturing', [
+      AttributeNode('Metalwork'),
+      AttributeNode('Textiles'),
+      AttributeNode('Printing'),
+      AttributeNode('Construction'),
     ]),
   ]),
 
   // 700 - Arts, Fine Arts and Decorative Arts
-  CategoryNode('Arts', [
-    CategoryNode('Art History & Criticism'),
-    CategoryNode('Urban Planning & Landscape'),
-    CategoryNode('Architecture'),
-    CategoryNode('Sculpture'),
-    CategoryNode('Drawing & Graphic Design', [
-      CategoryNode('Cartoons & Comics'),
-      CategoryNode('Commercial Art & Illustration'),
+  AttributeNode('Arts', [
+    AttributeNode('Art History & Criticism'),
+    AttributeNode('Urban Planning & Landscape'),
+    AttributeNode('Architecture'),
+    AttributeNode('Sculpture'),
+    AttributeNode('Drawing & Graphic Design', [
+      AttributeNode('Cartoons & Comics'),
+      AttributeNode('Commercial Art & Illustration'),
     ]),
-    CategoryNode('Decorative Arts & Crafts'),
-    CategoryNode('Painting'),
-    CategoryNode('Graphic Arts & Engraving'),
-    CategoryNode('Photography & Cinematography'),
-    CategoryNode('Music', [
-      CategoryNode('Musical Composition & Forms'),
-      CategoryNode('Vocal Music & Opera'),
-      CategoryNode('Musical Instruments'),
+    AttributeNode('Decorative Arts & Crafts'),
+    AttributeNode('Painting'),
+    AttributeNode('Graphic Arts & Engraving'),
+    AttributeNode('Photography & Cinematography'),
+    AttributeNode('Music', [
+      AttributeNode('Musical Composition & Forms'),
+      AttributeNode('Vocal Music & Opera'),
+      AttributeNode('Musical Instruments'),
     ]),
-    CategoryNode('Performing Arts', [
-      CategoryNode('Theater & Drama'),
-      CategoryNode('Ballet & Dance'),
-      CategoryNode('Radio & Television'),
+    AttributeNode('Performing Arts', [
+      AttributeNode('Theater & Drama'),
+      AttributeNode('Ballet & Dance'),
+      AttributeNode('Radio & Television'),
     ]),
-    CategoryNode('Recreation & Games', [
-      CategoryNode('Indoor Games & Chess'),
-      CategoryNode('Sports & Athletics'),
-      CategoryNode('Water & Aerial Sports'),
-      CategoryNode('Equestrian Sports'),
+    AttributeNode('Recreation & Games', [
+      AttributeNode('Indoor Games & Chess'),
+      AttributeNode('Sports & Athletics'),
+      AttributeNode('Water & Aerial Sports'),
+      AttributeNode('Equestrian Sports'),
     ]),
   ]),
 
   // 800 - Literature and Rhetoric
-  CategoryNode('Literature & Rhetoric', [
-    CategoryNode('Philosophy & Theory of Literature'),
-    CategoryNode('Rhetoric & Collections'),
-    CategoryNode("Children's Literature"),
-    CategoryNode('English Literature', [
-      CategoryNode('English Poetry'),
-      CategoryNode('English Theater'),
-      CategoryNode('English Novel'),
-      CategoryNode('English Essays'),
+  AttributeNode('Literature & Rhetoric', [
+    AttributeNode('Philosophy & Theory of Literature'),
+    AttributeNode('Rhetoric & Collections'),
+    AttributeNode("Children's Literature"),
+    AttributeNode('English Literature', [
+      AttributeNode('English Poetry'),
+      AttributeNode('English Theater'),
+      AttributeNode('English Novel'),
+      AttributeNode('English Essays'),
     ]),
-    CategoryNode('Germanic Literature'),
-    CategoryNode('French Literature'),
-    CategoryNode('Italian & Romanian Literature'),
-    CategoryNode('Spanish & Portuguese Literature', [
-      CategoryNode('Spanish Poetry'),
-      CategoryNode('Spanish Theater'),
-      CategoryNode('Spanish Novel'),
-      CategoryNode('Spanish Essays'),
-      CategoryNode('Portuguese Literature'),
+    AttributeNode('Germanic Literature'),
+    AttributeNode('French Literature'),
+    AttributeNode('Italian & Romanian Literature'),
+    AttributeNode('Spanish & Portuguese Literature', [
+      AttributeNode('Spanish Poetry'),
+      AttributeNode('Spanish Theater'),
+      AttributeNode('Spanish Novel'),
+      AttributeNode('Spanish Essays'),
+      AttributeNode('Portuguese Literature'),
     ]),
-    CategoryNode('Latin Literature'),
-    CategoryNode('Greek Literature'),
-    CategoryNode('Russian Literature'),
-    CategoryNode('Other Literatures'),
+    AttributeNode('Latin Literature'),
+    AttributeNode('Greek Literature'),
+    AttributeNode('Russian Literature'),
+    AttributeNode('Other Literatures'),
   ]),
 
   // 900 - Geography and History
-  CategoryNode('Geography & History', [
-    CategoryNode('Philosophy & Theory of History'),
-    CategoryNode('Geography & Travel'),
-    CategoryNode('Maps & Atlases'),
-    CategoryNode('Biography & Genealogy'),
-    CategoryNode('Ancient History'),
-    CategoryNode('European History', [
-      CategoryNode('British History'),
-      CategoryNode('French History'),
-      CategoryNode('German History'),
-      CategoryNode('Italian History'),
-      CategoryNode('Eastern European History'),
+  AttributeNode('Geography & History', [
+    AttributeNode('Philosophy & Theory of History'),
+    AttributeNode('Geography & Travel'),
+    AttributeNode('Maps & Atlases'),
+    AttributeNode('Biography & Genealogy'),
+    AttributeNode('Ancient History'),
+    AttributeNode('European History', [
+      AttributeNode('British History'),
+      AttributeNode('French History'),
+      AttributeNode('German History'),
+      AttributeNode('Italian History'),
+      AttributeNode('Eastern European History'),
     ]),
-    CategoryNode('Asian History'),
-    CategoryNode('African History'),
-    CategoryNode('North American History', [
-      CategoryNode('United States History'),
-      CategoryNode('Mexican History'),
-      CategoryNode('Central American History'),
-      CategoryNode('Caribbean History'),
+    AttributeNode('Asian History'),
+    AttributeNode('African History'),
+    AttributeNode('North American History', [
+      AttributeNode('United States History'),
+      AttributeNode('Mexican History'),
+      AttributeNode('Central American History'),
+      AttributeNode('Caribbean History'),
     ]),
-    CategoryNode('South American History'),
+    AttributeNode('South American History'),
   ]),
 ];
 
@@ -315,7 +315,7 @@ const List<CategoryNode> ecorfanCategoryTree = [
 /// and for populating category pickers in forms).
 List<String> get allCategoryNames {
   List<String> result = [];
-  void collect(List<CategoryNode> nodes) {
+  void collect(List<AttributeNode> nodes) {
     for (final node in nodes) {
       result.add(node.name);
       collect(node.children);

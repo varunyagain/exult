@@ -49,6 +49,7 @@ class Book {
   final String? coverImageUrl;
   final BookOwnerType ownerType;
   final List<String> categories;
+  final List<String> genres;
   final double depositAmount;
   final BookStatus status;
   final int totalCopies;
@@ -64,6 +65,7 @@ class Book {
     this.coverImageUrl,
     required this.ownerType,
     required this.categories,
+    this.genres = const [],
     required this.depositAmount,
     required this.status,
     this.totalCopies = 1,
@@ -81,6 +83,7 @@ class Book {
       'coverImageUrl': coverImageUrl,
       'ownerType': ownerType.toJson(),
       'categories': categories,
+      'genres': genres,
       'depositAmount': depositAmount,
       'status': status.toJson(),
       'totalCopies': totalCopies,
@@ -99,6 +102,7 @@ class Book {
       coverImageUrl: json['coverImageUrl'] as String?,
       ownerType: BookOwnerType.fromJson(json['ownerType'] as String? ?? 'business'),
       categories: (json['categories'] as List<dynamic>?)?.map((e) => e as String).toList() ?? [],
+      genres: (json['genres'] as List<dynamic>?)?.map((e) => e as String).toList() ?? [],
       depositAmount: (json['depositAmount'] as num?)?.toDouble() ?? 0.0,
       status: BookStatus.fromJson(json['status'] as String? ?? 'available'),
       totalCopies: json['totalCopies'] as int? ?? 1,
@@ -116,6 +120,7 @@ class Book {
     String? coverImageUrl,
     BookOwnerType? ownerType,
     List<String>? categories,
+    List<String>? genres,
     double? depositAmount,
     BookStatus? status,
     int? totalCopies,
@@ -131,6 +136,7 @@ class Book {
       coverImageUrl: coverImageUrl ?? this.coverImageUrl,
       ownerType: ownerType ?? this.ownerType,
       categories: categories ?? this.categories,
+      genres: genres ?? this.genres,
       depositAmount: depositAmount ?? this.depositAmount,
       status: status ?? this.status,
       totalCopies: totalCopies ?? this.totalCopies,
