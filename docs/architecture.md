@@ -15,7 +15,8 @@ exult/
 │   │   │   ├── app_constants.dart         # Pricing, limits, contact info
 │   │   │   ├── route_constants.dart       # Route path strings
 │   │   │   ├── firebase_constants.dart    # Collection/field names
-│   │   │   └── category_tree.dart         # ECORFAN ISBN classification
+│   │   │   ├── category_tree.dart         # AttributeNode class + ECORFAN tree (PENDING: rename to attribute_tree.dart)
+│   │   │   └── genre_tree.dart            # Writing genre tree (uses AttributeNode)
 │   │   ├── theme/
 │   │   │   └── app_theme.dart             # Indigo primary, Material 3
 │   │   └── utils/
@@ -46,14 +47,14 @@ exult/
 │       │   └── app_router.dart            # GoRouter with auth redirects
 │       ├── providers/
 │       │   ├── auth_provider.dart         # Auth state, controller
-│       │   ├── books_provider.dart        # Book streams, search, category filter
+│       │   ├── books_provider.dart        # Book streams, search, category/genre filter
 │       │   ├── subscription_provider.dart # Subscription state, controller
 │       │   └── admin_provider.dart        # Admin metrics, user details
 │       ├── screens/
 │       │   ├── home/home_screen.dart
 │       │   ├── auth/sign_in_screen.dart
 │       │   ├── auth/sign_up_screen.dart
-│       │   ├── books/browse_books_screen.dart
+│       │   ├── books/browse_books_screen.dart   # Dual tree sidebar (category + genre)
 │       │   ├── books/book_detail_screen.dart
 │       │   ├── loans/my_loans_screen.dart
 │       │   ├── profile/profile_screen.dart
@@ -64,13 +65,15 @@ exult/
 │       │   └── admin/
 │       │       ├── admin_shell.dart               # Sidebar nav container
 │       │       ├── admin_dashboard_screen.dart     # Metrics & charts
-│       │       ├── admin_users_screen.dart         # User list
+│       │       ├── admin_users_screen.dart         # User list (no summary cards)
 │       │       ├── admin_user_detail_screen.dart   # User detail + loans
-│       │       ├── admin_books_screen.dart         # Book catalog mgmt
+│       │       ├── admin_books_screen.dart         # Book catalog mgmt + BookFormDialog
 │       │       └── admin_financials_screen.dart    # Revenue analytics
 │       └── widgets/
 │           ├── cards/book_card.dart                # Book grid item
-│           └── category_tree_widget.dart           # Category selector
+│           └── attribute_tree_widget.dart          # AttributeTreeWidget + AttributePickerDialog
+├── exult_flutter/tool/
+│   └── seed_books.dart                            # Standalone seed script
 ├── index.html, pricing.html, etc.                 # Static HTML site
 ├── css/styles.css
 └── assets/images/exult-logo.svg
@@ -147,11 +150,24 @@ App URL: https://exult-web-prod-3.web.app
 - `contacts/` - Public create; admin can read/update/delete
 - `mail/` - Admin-only create; no read/update/delete (extension processes docs)
 
+## Shared Attribute Tree System
+
+Both category and genre filtering use the same widget system:
+- **`AttributeNode`** - Generic tree node (name + children), defined in `category_tree.dart`
+- **`AttributeTreeWidget`** - Collapsible tree with tri-state checkboxes, search filtering
+  - Props: `treeData`, `title`, `icon`, `availableValues`, `selectedValues`, `onSelectionChanged`, `searchQuery`
+  - Only renders nodes where `availableValues` contains the name (or a descendant's name)
+  - Parent auto-selection: selecting a child also selects ancestors; deselecting removes orphaned ancestors
+- **`AttributePickerDialog`** - Dialog wrapper around `AttributeTreeWidget` with search bar
+  - Static methods: `show()` for categories, `showGenre()` for genres (use full tree names)
+  - For filter dialogs: callers pass book-derived values as `allNames` + `initialSelection`
+  - For form dialogs (add/edit book): callers use static methods with full tree
+
 ## Implementation Notes
 1. Book search is client-side string matching (title/author) - ready for Algolia
 2. Subscription expiry checked on every read, auto-updated
 3. Loan overdue status computed from dueDate vs now (not stored)
-4. Category filtering supports single-select and multi-select (tree-based)
+4. Category & genre filtering via dual tree sidebar (browse) and picker dialog buttons (admin)
 5. Admin metrics calculated on-demand from data streams
 6. Seed data runs once on startup if books collection empty
 7. GoRouter redirects based on authState + user role; waits for user data to load before redirecting to avoid race conditions
@@ -160,3 +176,6 @@ App URL: https://exult-web-prod-3.web.app
 10. Static HTML prices differ from Flutter app (Flutter is canonical)
 11. Admin users are redirected to `/admin` dashboard on login and from home page
 12. When admin adds a user, an invite email is sent via Firestore `mail` collection (requires Firebase Trigger Email extension with SMTP configured)
+13. Browse books auto-selects all categories/genres from loaded books on first load (via `_categoriesInitialized`/`_genresInitialized` flags)
+14. Manage Books filter dialogs read from admin providers to get book-derived values, auto-select when empty
+15. Manage Books DataTable has Genres column (purple badges) after Categories column (primary-colored badges)
