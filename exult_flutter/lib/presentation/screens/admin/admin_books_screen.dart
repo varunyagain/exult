@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:exult_flutter/core/constants/app_constants.dart';
 import 'package:exult_flutter/core/constants/route_constants.dart';
 import 'package:exult_flutter/domain/models/book_model.dart';
 import 'package:exult_flutter/presentation/providers/admin_provider.dart';
@@ -46,7 +45,7 @@ class _AdminBooksScreenState extends ConsumerState<AdminBooksScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Book Management'),
+        title: const Text('Manage Books'),
         automaticallyImplyLeading: false,
         actions: [
           IconButton(
@@ -63,30 +62,7 @@ class _AdminBooksScreenState extends ConsumerState<AdminBooksScreen> {
           const SizedBox(width: 16),
         ],
       ),
-      body: Row(
-        children: [
-          // Category tree sidebar
-          Container(
-            width: 240,
-            decoration: BoxDecoration(
-              border: Border(
-                right: BorderSide(
-                  color: Theme.of(context).dividerColor,
-                ),
-              ),
-            ),
-            child: CategoryTreeWidget(
-              categoriesWithBooks: ref.watch(allBookCategoriesAdminProvider),
-              selectedCategories: _selectedTreeCategories,
-              onSelectionChanged: (newSelection) {
-                setState(() => _selectedTreeCategories = newSelection);
-              },
-            ),
-          ),
-
-          // Main content
-          Expanded(
-            child: Column(
+      body: Column(
               children: [
                 // Search and Status Filter Bar
                 Container(
@@ -127,6 +103,40 @@ class _AdminBooksScreenState extends ConsumerState<AdminBooksScreen> {
                           onChanged: (value) {
                             setState(() => _searchQuery = value.toLowerCase());
                           },
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+
+                      // Category Filter
+                      SizedBox(
+                        width: 200,
+                        child: InkWell(
+                          onTap: () async {
+                            final result = await CategoryPickerDialog.show(
+                              context,
+                              _selectedTreeCategories,
+                            );
+                            if (result != null) {
+                              setState(() => _selectedTreeCategories = result);
+                            }
+                          },
+                          child: InputDecorator(
+                            decoration: const InputDecoration(
+                              labelText: 'Categories',
+                              border: OutlineInputBorder(),
+                              contentPadding: EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 12,
+                              ),
+                              suffixIcon: Icon(Icons.arrow_drop_down),
+                            ),
+                            child: Text(
+                              _selectedTreeCategories.isEmpty
+                                  ? 'All'
+                                  : '${_selectedTreeCategories.length} selected',
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
                         ),
                       ),
                       const SizedBox(width: 16),
@@ -223,9 +233,6 @@ class _AdminBooksScreenState extends ConsumerState<AdminBooksScreen> {
                 ),
               ],
             ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -843,31 +850,56 @@ class _BookFormDialogState extends State<BookFormDialog> {
                 const SizedBox(height: 16),
 
                 // Categories
-                Text(
-                  'Categories',
-                  style: Theme.of(context).textTheme.titleSmall,
+                Row(
+                  children: [
+                    Text(
+                      'Categories',
+                      style: Theme.of(context).textTheme.titleSmall,
+                    ),
+                    const Spacer(),
+                    TextButton.icon(
+                      onPressed: () async {
+                        final result = await CategoryPickerDialog.show(
+                          context,
+                          _selectedCategories.toSet(),
+                        );
+                        if (result != null) {
+                          setState(() {
+                            _selectedCategories = result.toList();
+                          });
+                        }
+                      },
+                      icon: const Icon(Icons.edit, size: 18),
+                      label: const Text('Select'),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: AppConstants.bookCategories.map((category) {
-                    final isSelected = _selectedCategories.contains(category);
-                    return FilterChip(
-                      label: Text(category),
-                      selected: isSelected,
-                      onSelected: (selected) {
-                        setState(() {
-                          if (selected) {
-                            _selectedCategories.add(category);
-                          } else {
+                if (_selectedCategories.isEmpty)
+                  Text(
+                    'No categories selected',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Colors.grey,
+                        ),
+                  )
+                else
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: _selectedCategories.map((category) {
+                      return Chip(
+                        label: Text(category, style: const TextStyle(fontSize: 12)),
+                        deleteIcon: const Icon(Icons.close, size: 16),
+                        onDeleted: () {
+                          setState(() {
                             _selectedCategories.remove(category);
-                          }
-                        });
-                      },
-                    );
-                  }).toList(),
-                ),
+                          });
+                        },
+                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        visualDensity: VisualDensity.compact,
+                      );
+                    }).toList(),
+                  ),
               ],
             ),
           ),

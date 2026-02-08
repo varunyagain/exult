@@ -16,11 +16,16 @@ class CategoryTreeWidget extends StatefulWidget {
   /// Called whenever the selection changes.
   final ValueChanged<Set<String>> onSelectionChanged;
 
+  /// Optional search query to filter the tree. Matching nodes and their
+  /// ancestors are shown; ancestor nodes are auto-expanded.
+  final String searchQuery;
+
   const CategoryTreeWidget({
     super.key,
     required this.categoriesWithBooks,
     required this.selectedCategories,
     required this.onSelectionChanged,
+    this.searchQuery = '',
   });
 
   @override
@@ -33,7 +38,7 @@ class _CategoryTreeWidgetState extends State<CategoryTreeWidget> {
   @override
   Widget build(BuildContext context) {
     final visibleRoots = ecorfanCategoryTree
-        .where((node) => _hasBooks(node))
+        .where((node) => _isVisible(node))
         .toList();
 
     if (visibleRoots.isEmpty) {
@@ -92,6 +97,19 @@ class _CategoryTreeWidgetState extends State<CategoryTreeWidget> {
     return node.children.any((child) => _hasBooks(child));
   }
 
+  /// Check if a node or any of its descendants matches the search query.
+  bool _matchesSearch(CategoryNode node) {
+    if (widget.searchQuery.isEmpty) return true;
+    final query = widget.searchQuery.toLowerCase();
+    if (node.name.toLowerCase().contains(query)) return true;
+    return node.children.any((child) => _matchesSearch(child));
+  }
+
+  /// Whether a node should be displayed (has books AND matches search).
+  bool _isVisible(CategoryNode node) {
+    return _hasBooks(node) && _matchesSearch(node);
+  }
+
   /// Compute the check state for a node.
   _CheckState _checkState(CategoryNode node) {
     if (node.children.isEmpty) {
@@ -102,7 +120,7 @@ class _CategoryTreeWidgetState extends State<CategoryTreeWidget> {
     }
 
     // Non-leaf: check visible children
-    final visibleChildren = node.children.where((c) => _hasBooks(c)).toList();
+    final visibleChildren = node.children.where((c) => _isVisible(c)).toList();
     if (visibleChildren.isEmpty) {
       return widget.selectedCategories.contains(node.name)
           ? _CheckState.all
@@ -122,7 +140,7 @@ class _CategoryTreeWidgetState extends State<CategoryTreeWidget> {
       result.add(node.name);
     }
     for (final child in node.children) {
-      if (_hasBooks(child)) {
+      if (_isVisible(child)) {
         result.addAll(_selectableNames(child));
       }
     }
@@ -146,12 +164,14 @@ class _CategoryTreeWidgetState extends State<CategoryTreeWidget> {
   }
 
   Widget _buildNode(BuildContext context, CategoryNode node, int depth) {
-    if (!_hasBooks(node)) return const SizedBox.shrink();
+    if (!_isVisible(node)) return const SizedBox.shrink();
 
     final visibleChildren =
-        node.children.where((c) => _hasBooks(c)).toList();
+        node.children.where((c) => _isVisible(c)).toList();
     final hasChildren = visibleChildren.isNotEmpty;
-    final isExpanded = _expanded.contains(node.name);
+    final isSearching = widget.searchQuery.isNotEmpty;
+    final isExpanded = _expanded.contains(node.name) ||
+        (isSearching && hasChildren);
     final state = _checkState(node);
 
     return Column(
@@ -225,6 +245,105 @@ class _CategoryTreeWidgetState extends State<CategoryTreeWidget> {
         if (hasChildren && isExpanded)
           ...visibleChildren
               .map((child) => _buildNode(context, child, depth + 1)),
+      ],
+    );
+  }
+}
+
+/// A dialog that wraps [CategoryTreeWidget] for picking categories in forms.
+class CategoryPickerDialog extends StatefulWidget {
+  final Set<String> initialSelection;
+
+  const CategoryPickerDialog({super.key, required this.initialSelection});
+
+  /// Show the dialog and return the updated selection, or null if cancelled.
+  static Future<Set<String>?> show(
+      BuildContext context, Set<String> currentSelection) {
+    return showDialog<Set<String>>(
+      context: context,
+      builder: (_) =>
+          CategoryPickerDialog(initialSelection: currentSelection),
+    );
+  }
+
+  @override
+  State<CategoryPickerDialog> createState() => _CategoryPickerDialogState();
+}
+
+class _CategoryPickerDialogState extends State<CategoryPickerDialog> {
+  late Set<String> _selection;
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _selection = Set<String>.from(widget.initialSelection);
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Select Categories'),
+      content: SizedBox(
+        width: 400,
+        height: 450,
+        child: Column(
+          children: [
+            TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: 'Search categories...',
+                prefixIcon: const Icon(Icons.search, size: 20),
+                suffixIcon: _searchQuery.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear, size: 20),
+                        onPressed: () {
+                          _searchController.clear();
+                          setState(() => _searchQuery = '');
+                        },
+                      )
+                    : null,
+                border: const OutlineInputBorder(),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
+                isDense: true,
+              ),
+              onChanged: (value) {
+                setState(() => _searchQuery = value.trim());
+              },
+            ),
+            const SizedBox(height: 8),
+            Expanded(
+              child: CategoryTreeWidget(
+                categoriesWithBooks: allCategoryNames.toSet(),
+                selectedCategories: _selection,
+                onSelectionChanged: (newSelection) {
+                  setState(() => _selection = newSelection);
+                },
+                searchQuery: _searchQuery,
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(context).pop(_selection),
+          child: const Text('Done'),
+        ),
       ],
     );
   }
