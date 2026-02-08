@@ -84,8 +84,8 @@ Public (no auth):
   /pricing             → PricingScreen
   /how-it-works        → HowItWorksScreen
   /contact             → ContactUsScreen
-  /signin              → SignInScreen
-  /signup              → SignUpScreen
+  /signin              → SignInScreen (redirects to /admin or /books after login)
+  /signup              → SignUpScreen (redirects to /admin or /books after login)
 
 Protected (auth required):
   /books               → BrowseBooksScreen
@@ -123,6 +123,8 @@ Theme:
 Contact:
   hello@exultbooks.in
   +91 98765 43210
+
+App URL: https://exult-web-prod-3.web.app
 ```
 
 ## Firebase Collections
@@ -131,10 +133,19 @@ Contact:
 - `loans/` - Loan records
 - `subscriptions/` - User subscriptions
 - `contacts/` - Contact form submissions
+- `mail/` - Outgoing emails (consumed by Firebase Trigger Email extension)
 
 ## Firebase Storage Paths
 - `book_covers/` - Book cover images
 - `profile_pictures/` - User profile images
+
+## Firestore Security Rules (`exult_flutter/firestore.rules`)
+- `users/` - Authenticated users can read; users can create/update own doc
+- `books/` - Public read; create open (for seeding); admin/owner can update/delete
+- `subscriptions/` - Owner or admin can read/update; owner can create; admin can delete
+- `loans/` - Borrower or admin can read/update; authenticated users can create
+- `contacts/` - Public create; admin can read/update/delete
+- `mail/` - Admin-only create; no read/update/delete (extension processes docs)
 
 ## Implementation Notes
 1. Book search is client-side string matching (title/author) - ready for Algolia
@@ -143,7 +154,9 @@ Contact:
 4. Category filtering supports single-select and multi-select (tree-based)
 5. Admin metrics calculated on-demand from data streams
 6. Seed data runs once on startup if books collection empty
-7. GoRouter redirects based on authState + user role
+7. GoRouter redirects based on authState + user role; waits for user data to load before redirecting to avoid race conditions
 8. All dates stored as Firestore Timestamps, converted to DateTime in models
 9. Roles: subscriber (default) and admin
 10. Static HTML prices differ from Flutter app (Flutter is canonical)
+11. Admin users are redirected to `/admin` dashboard on login and from home page
+12. When admin adds a user, an invite email is sent via Firestore `mail` collection (requires Firebase Trigger Email extension with SMTP configured)

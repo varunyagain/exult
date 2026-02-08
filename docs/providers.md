@@ -12,7 +12,6 @@
 ## Auth Providers (`presentation/providers/auth_provider.dart`)
 - `authStateProvider` - StreamProvider<User?> - Firebase auth user stream
 - `currentUserProvider` - StreamProvider<UserModel?> - Full user model
-- `isAdminProvider` - Provider<bool> - Check admin role
 - `authControllerProvider` - StateNotifierProvider<AuthController, AsyncValue<void>>
   - Methods: signIn, signUp, signOut, resetPassword
 
@@ -36,6 +35,7 @@
   - Methods: createSubscription, cancelSubscription
 
 ## Admin Providers (`presentation/providers/admin_provider.dart`)
+- `isAdminProvider` - Provider<bool> - Check admin role
 - `allUsersProvider` - StreamProvider<List<UserModel>>
 - `allLoansProvider` - StreamProvider<List<Loan>>
 - `usersWithDetailsProvider` - FutureProvider - Users + subscription + loan count
