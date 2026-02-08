@@ -1,3 +1,5 @@
+import 'package:exult_flutter/core/constants/category_tree.dart';
+
 /// Application-wide constants including subscription tiers and pricing
 class AppConstants {
   // App info
@@ -31,6 +33,12 @@ class AppConstants {
   // Contact info
   static const String contactEmail = 'hello@exultbooks.in';
   static const String contactPhone = '+91 98765 43210';
+
+  // App URL
+  static const String appUrl = 'https://exult-web-prod-3.web.app';
+
+  // Book categories (master list from ECORFAN ISBN Classification)
+  static List<String> get bookCategories => allCategoryNames;
 }
 
 /// Subscription tier enums

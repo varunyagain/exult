@@ -6,6 +6,7 @@ class FirebaseConstants {
   static const String loansCollection = 'loans';
   static const String subscriptionsCollection = 'subscriptions';
   static const String contactsCollection = 'contacts';
+  static const String mailCollection = 'mail';
 
   // Storage paths
   static const String bookCoversPath = 'book_covers';

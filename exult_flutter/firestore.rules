@@ -54,6 +54,13 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // Mail collection (used by Firebase Trigger Email extension)
+    match /mail/{mailId} {
+      allow create: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      allow read, update, delete: if false;
+    }
+
     // Contact submissions
     match /contacts/{contactId} {
       allow create: if true;

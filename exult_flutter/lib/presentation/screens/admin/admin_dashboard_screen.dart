@@ -1,6 +1,7 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:exult_flutter/presentation/providers/admin_provider.dart';
 
 class AdminDashboardScreen extends ConsumerStatefulWidget {
@@ -12,28 +13,36 @@ class AdminDashboardScreen extends ConsumerStatefulWidget {
 }
 
 class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
-  String _selectedPeriod = 'Last Month';
+  String _selectedPeriod = 'This Month';
 
   void _selectPeriod(String period) {
     final now = DateTime.now();
     DateRange range;
 
     switch (period) {
-      case 'Last Week':
+      case 'Today':
         range = DateRange(
-            start: now.subtract(const Duration(days: 7)), end: now);
+            start: DateTime(now.year, now.month, now.day), end: now);
         break;
-      case 'Last Month':
+      case 'This Week':
+        // Start of Monday
+        final weekday = now.weekday; // 1=Monday
+        final monday = now.subtract(Duration(days: weekday - 1));
         range = DateRange(
-            start: now.subtract(const Duration(days: 30)), end: now);
+            start: DateTime(monday.year, monday.month, monday.day), end: now);
         break;
-      case 'Last Quarter':
+      case 'This Month':
         range = DateRange(
-            start: now.subtract(const Duration(days: 90)), end: now);
+            start: DateTime(now.year, now.month, 1), end: now);
         break;
-      case 'Last Year':
+      case 'This Quarter':
+        final quarterStartMonth = ((now.month - 1) ~/ 3) * 3 + 1;
         range = DateRange(
-            start: now.subtract(const Duration(days: 365)), end: now);
+            start: DateTime(now.year, quarterStartMonth, 1), end: now);
+        break;
+      case 'This Year':
+        range = DateRange(
+            start: DateTime(now.year, 1, 1), end: now);
         break;
       default:
         return;
@@ -94,10 +103,11 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                 ),
                 const SizedBox(width: 12),
                 ...[
-                  'Last Week',
-                  'Last Month',
-                  'Last Quarter',
-                  'Last Year',
+                  'Today',
+                  'This Week',
+                  'This Month',
+                  'This Quarter',
+                  'This Year',
                 ].map((period) => Padding(
                       padding: const EdgeInsets.only(right: 8),
                       child: ChoiceChip(
@@ -119,13 +129,38 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
           // Charts area
           Expanded(
             child: metricsAsync.when(
-              data: (metrics) => SingleChildScrollView(
+              data: (metrics) {
+                final dateRange = ref.watch(dashboardDateRangeProvider);
+                final dateFormat = DateFormat('d MMM yyyy');
+                final rangeLabel =
+                    '${dateFormat.format(dateRange.start)} – ${dateFormat.format(dateRange.end)}';
+
+                return SingleChildScrollView(
                 padding: const EdgeInsets.all(24),
                 child: Center(
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 1200),
                     child: Column(
                       children: [
+                        // Date range label
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Padding(
+                            padding: const EdgeInsets.only(bottom: 16),
+                            child: Text(
+                              rangeLabel,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleSmall
+                                  ?.copyWith(
+                                    color: Theme.of(context)
+                                        .textTheme
+                                        .bodySmall
+                                        ?.color,
+                                  ),
+                            ),
+                          ),
+                        ),
                         // Summary cards row
                         Row(
                           children: [
@@ -210,7 +245,8 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                     ),
                   ),
                 ),
-              ),
+              );
+              },
               loading: () =>
                   const Center(child: CircularProgressIndicator()),
               error: (error, _) => Center(

@@ -59,10 +59,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
-      } else if (!authState.isLoading) {
-        // Sign-up always creates subscribers, navigate directly
-        context.go(RouteConstants.books);
       }
+      // Navigation is handled automatically by the router's redirect
     }
   }
 

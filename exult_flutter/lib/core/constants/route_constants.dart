@@ -19,7 +19,9 @@ class RouteConstants {
 
   // Admin routes (require admin role)
   static const String admin = '/admin';
+  static const String adminSubscribers = '/admin/subscribers';
   static const String adminBooks = '/admin/books';
+  static const String adminFinancials = '/admin/financials';
 
   // Helper methods
   static String bookDetailPath(String bookId) => '/books/$bookId';

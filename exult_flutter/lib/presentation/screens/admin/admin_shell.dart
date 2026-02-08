@@ -96,6 +96,13 @@ class AdminShell extends ConsumerWidget {
                   isSelected: false,
                   onTap: () => context.go(RouteConstants.books),
                 ),
+                _NavItem(
+                  icon: Icons.person,
+                  label: 'Profile',
+                  route: RouteConstants.profile,
+                  isSelected: currentLocation == RouteConstants.profile,
+                  onTap: () => context.go(RouteConstants.profile),
+                ),
 
                 // Sign Out
                 _NavItem(

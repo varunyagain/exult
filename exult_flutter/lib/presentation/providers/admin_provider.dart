@@ -225,7 +225,7 @@ class DashboardMetrics {
 final dashboardDateRangeProvider = StateProvider<DateRange>((ref) {
   final now = DateTime.now();
   return DateRange(
-    start: now.subtract(const Duration(days: 30)),
+    start: DateTime(now.year, now.month, 1),
     end: now,
   );
 });

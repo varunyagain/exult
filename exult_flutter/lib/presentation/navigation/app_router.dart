@@ -21,14 +21,26 @@ import 'package:exult_flutter/presentation/screens/admin/admin_user_detail_scree
 import 'package:exult_flutter/presentation/screens/admin/admin_books_screen.dart';
 import 'package:exult_flutter/presentation/screens/admin/admin_financials_screen.dart';
 
+/// Notifier that triggers GoRouter redirect re-evaluation when auth state changes
+class _RouterNotifier extends ChangeNotifier {
+  _RouterNotifier(this._ref) {
+    _ref.listen(authStateProvider, (_, __) => notifyListeners());
+    _ref.listen(currentUserProvider, (_, __) => notifyListeners());
+  }
+
+  final Ref _ref;
+}
+
 /// Provider for the router configuration
 final routerProvider = Provider<GoRouter>((ref) {
-  final authState = ref.watch(authStateProvider);
+  final notifier = _RouterNotifier(ref);
 
   return GoRouter(
     initialLocation: RouteConstants.home,
     debugLogDiagnostics: true,
+    refreshListenable: notifier,
     redirect: (context, state) {
+      final authState = ref.read(authStateProvider);
       final isAuthenticated = authState.value != null;
       final isAuthRoute = state.matchedLocation == RouteConstants.signIn ||
           state.matchedLocation == RouteConstants.signUp;
@@ -40,6 +52,10 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       // Redirect away from auth routes when already authenticated
       if (isAuthenticated && isAuthRoute) {
+        final currentUser = ref.read(currentUserProvider).valueOrNull;
+        if (currentUser?.isAdmin == true) {
+          return RouteConstants.admin;
+        }
         return RouteConstants.books;
       }
 
