@@ -52,11 +52,28 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       // Redirect away from auth routes when already authenticated
       if (isAuthenticated && isAuthRoute) {
-        final currentUser = ref.read(currentUserProvider).valueOrNull;
+        final currentUserState = ref.read(currentUserProvider);
+        // Wait for user data to load before deciding where to redirect
+        if (currentUserState.isLoading) {
+          return null;
+        }
+        final currentUser = currentUserState.valueOrNull;
         if (currentUser?.isAdmin == true) {
           return RouteConstants.admin;
         }
         return RouteConstants.books;
+      }
+
+      // Redirect admins from home page to admin dashboard
+      if (isAuthenticated && state.matchedLocation == RouteConstants.home) {
+        final currentUserState = ref.read(currentUserProvider);
+        if (currentUserState.isLoading) {
+          return null;
+        }
+        final currentUser = currentUserState.valueOrNull;
+        if (currentUser?.isAdmin == true) {
+          return RouteConstants.admin;
+        }
       }
 
       return null; // No redirect needed
