@@ -15,7 +15,7 @@ exult/
 │   │   │   ├── app_constants.dart         # Pricing, limits, contact info
 │   │   │   ├── route_constants.dart       # Route path strings
 │   │   │   ├── firebase_constants.dart    # Collection/field names
-│   │   │   ├── category_tree.dart         # AttributeNode class + ECORFAN tree (PENDING: rename to attribute_tree.dart)
+│   │   │   ├── attribute_tree.dart         # AttributeNode class + ECORFAN category tree
 │   │   │   └── genre_tree.dart            # Writing genre tree (uses AttributeNode)
 │   │   ├── theme/
 │   │   │   └── app_theme.dart             # Indigo primary, Material 3
@@ -153,7 +153,7 @@ App URL: https://exult-web-prod-3.web.app
 ## Shared Attribute Tree System
 
 Both category and genre filtering use the same widget system:
-- **`AttributeNode`** - Generic tree node (name + children), defined in `category_tree.dart`
+- **`AttributeNode`** - Generic tree node (name + children), defined in `attribute_tree.dart`
 - **`AttributeTreeWidget`** - Collapsible tree with tri-state checkboxes, search filtering
   - Props: `treeData`, `title`, `icon`, `availableValues`, `selectedValues`, `onSelectionChanged`, `searchQuery`
   - Only renders nodes where `availableValues` contains the name (or a descendant's name)

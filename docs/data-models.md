@@ -38,7 +38,7 @@ Computed:
   isAvailable → status == BookStatus.available
 ```
 
-## AttributeNode (`core/constants/category_tree.dart`)
+## AttributeNode (`core/constants/attribute_tree.dart`)
 ```
 Generic tree node used by both ECORFAN category tree and writing genre tree.
 
@@ -51,7 +51,7 @@ Computed:
   allNames → all names in subtree (self + descendants)
 
 Trees defined:
-  ecorfanCategoryTree (category_tree.dart) - ECORFAN ISBN classification
+  ecorfanCategoryTree (attribute_tree.dart) - ECORFAN ISBN classification
   writingGenreTree (genre_tree.dart) - Wikipedia writing genres
 
 Helper getters:

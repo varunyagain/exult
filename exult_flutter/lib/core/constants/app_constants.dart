@@ -1,4 +1,4 @@
-import 'package:exult_flutter/core/constants/category_tree.dart';
+import 'package:exult_flutter/core/constants/attribute_tree.dart';
 
 /// Application-wide constants including subscription tiers and pricing
 class AppConstants {

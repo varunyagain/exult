@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:exult_flutter/core/constants/category_tree.dart';
+import 'package:exult_flutter/core/constants/attribute_tree.dart';
 import 'package:exult_flutter/core/constants/genre_tree.dart';
 
 /// Tri-state for a category node's selection.

@@ -1,7 +1,7 @@
 /// Writing genre tree based on Wikipedia's "List of writing genres".
-/// Reuses AttributeNode from category_tree.dart for the tree structure.
+/// Reuses AttributeNode from attribute_tree.dart for the tree structure.
 
-import 'package:exult_flutter/core/constants/category_tree.dart';
+import 'package:exult_flutter/core/constants/attribute_tree.dart';
 
 const List<AttributeNode> writingGenreTree = [
   // ── Fiction ──────────────────────────────────────────────────────────────
