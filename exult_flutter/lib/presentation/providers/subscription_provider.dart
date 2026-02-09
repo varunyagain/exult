@@ -1,9 +1,19 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:exult_flutter/core/constants/app_constants.dart';
+import 'package:exult_flutter/data/repositories/firebase_loan_repository.dart';
 import 'package:exult_flutter/data/repositories/firebase_subscription_repository.dart';
+import 'package:exult_flutter/domain/models/book_model.dart';
+import 'package:exult_flutter/domain/models/loan_model.dart';
 import 'package:exult_flutter/domain/models/subscription_model.dart';
+import 'package:exult_flutter/domain/repositories/loan_repository.dart';
 import 'package:exult_flutter/domain/repositories/subscription_repository.dart';
 import 'package:exult_flutter/presentation/providers/auth_provider.dart';
+import 'package:exult_flutter/presentation/providers/books_provider.dart';
+
+/// Provider for loan repository
+final loanRepositoryProvider = Provider<LoanRepository>((ref) {
+  return FirebaseLoanRepository();
+});
 
 /// Provider for subscription repository
 final subscriptionRepositoryProvider = Provider<SubscriptionRepository>((ref) {
@@ -123,4 +133,120 @@ final subscriptionControllerProvider =
     StateNotifierProvider<SubscriptionController, AsyncValue<void>>((ref) {
   final subscriptionRepository = ref.watch(subscriptionRepositoryProvider);
   return SubscriptionController(subscriptionRepository, ref);
+});
+
+/// Stream provider for current user's loans
+final myLoansProvider = StreamProvider<List<Loan>>((ref) {
+  final authState = ref.watch(authStateProvider);
+  final loanRepository = ref.watch(loanRepositoryProvider);
+
+  final user = authState.valueOrNull;
+  if (user == null) {
+    return Stream.value([]);
+  }
+
+  return loanRepository.watchUserLoans(user.uid);
+});
+
+/// Loan controller for borrow and return operations
+class LoanController extends StateNotifier<AsyncValue<void>> {
+  final Ref _ref;
+
+  LoanController(this._ref) : super(const AsyncValue.data(null));
+
+  /// Borrow a book
+  Future<bool> borrowBook(Book book) async {
+    state = const AsyncValue.loading();
+
+    try {
+      final authState = _ref.read(authStateProvider);
+      final user = authState.valueOrNull;
+      if (user == null) {
+        throw Exception('User not authenticated');
+      }
+
+      final subscription =
+          _ref.read(activeSubscriptionProvider).valueOrNull;
+      if (subscription == null) {
+        throw Exception('No active subscription');
+      }
+
+      if (!subscription.canBorrowMore) {
+        throw Exception('Borrowing limit reached');
+      }
+
+      if (book.status != BookStatus.available) {
+        throw Exception('Book is not available');
+      }
+
+      final now = DateTime.now();
+      final loan = Loan(
+        id: '',
+        bookId: book.id,
+        borrowerId: user.uid,
+        subscriptionId: subscription.id,
+        status: LoanStatus.active,
+        depositAmount: book.depositAmount,
+        depositPaid: true,
+        borrowedAt: now,
+        dueDate: now.add(const Duration(days: 14)),
+      );
+
+      final loanRepository = _ref.read(loanRepositoryProvider);
+      await loanRepository.createLoan(loan);
+
+      final subscriptionRepository =
+          _ref.read(subscriptionRepositoryProvider);
+      await subscriptionRepository.incrementBooksCount(subscription.id);
+
+      final newAvailable = book.availableCopies - 1;
+      final updatedBook = book.copyWith(
+        availableCopies: newAvailable,
+        status:
+            newAvailable <= 0 ? BookStatus.borrowed : BookStatus.available,
+      );
+      final bookRepository = _ref.read(bookRepositoryProvider);
+      await bookRepository.updateBook(updatedBook);
+
+      state = const AsyncValue.data(null);
+      return true;
+    } catch (error, stackTrace) {
+      state = AsyncValue.error(error, stackTrace);
+      return false;
+    }
+  }
+
+  /// Return a borrowed book
+  Future<bool> returnBook(Loan loan) async {
+    state = const AsyncValue.loading();
+
+    try {
+      final loanRepository = _ref.read(loanRepositoryProvider);
+      await loanRepository.returnLoan(loan.id);
+
+      final subscriptionRepository =
+          _ref.read(subscriptionRepositoryProvider);
+      await subscriptionRepository.decrementBooksCount(loan.subscriptionId);
+
+      final bookRepository = _ref.read(bookRepositoryProvider);
+      final book = await bookRepository.getBookById(loan.bookId);
+      final updatedBook = book.copyWith(
+        availableCopies: book.availableCopies + 1,
+        status: BookStatus.available,
+      );
+      await bookRepository.updateBook(updatedBook);
+
+      state = const AsyncValue.data(null);
+      return true;
+    } catch (error, stackTrace) {
+      state = AsyncValue.error(error, stackTrace);
+      return false;
+    }
+  }
+}
+
+/// Provider for loan controller
+final loanControllerProvider =
+    StateNotifierProvider<LoanController, AsyncValue<void>>((ref) {
+  return LoanController(ref);
 });

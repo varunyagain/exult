@@ -1,19 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:exult_flutter/data/repositories/firebase_loan_repository.dart';
-import 'package:exult_flutter/data/repositories/firebase_subscription_repository.dart';
 import 'package:exult_flutter/domain/models/book_model.dart';
 import 'package:exult_flutter/domain/models/loan_model.dart';
 import 'package:exult_flutter/domain/models/subscription_model.dart';
 import 'package:exult_flutter/domain/models/user_model.dart';
-import 'package:exult_flutter/domain/repositories/loan_repository.dart';
 import 'package:exult_flutter/presentation/providers/auth_provider.dart';
 import 'package:exult_flutter/presentation/providers/books_provider.dart';
 import 'package:exult_flutter/presentation/providers/subscription_provider.dart';
-
-/// Provider for loan repository
-final loanRepositoryProvider = Provider<LoanRepository>((ref) {
-  return FirebaseLoanRepository();
-});
 
 /// Provider for all users stream (admin only)
 final allUsersProvider = StreamProvider<List<UserModel>>((ref) {

@@ -66,7 +66,7 @@ exult/
 │       │       ├── admin_shell.dart               # Sidebar nav container
 │       │       ├── admin_dashboard_screen.dart     # Metrics & charts
 │       │       ├── admin_users_screen.dart         # User list (no summary cards)
-│       │       ├── admin_user_detail_screen.dart   # User detail + loans
+│       │       ├── admin_user_detail_screen.dart   # User detail + subscription/loan mgmt
 │       │       ├── admin_books_screen.dart         # Book catalog mgmt + BookFormDialog
 │       │       └── admin_financials_screen.dart    # Revenue analytics
 │       └── widgets/
@@ -143,12 +143,17 @@ App URL: https://exult-web-prod-3.web.app
 - `profile_pictures/` - User profile images
 
 ## Firestore Security Rules (`exult_flutter/firestore.rules`)
-- `users/` - Authenticated users can read; users can create/update own doc
-- `books/` - Public read; create open (for seeding); admin/owner can update/delete
-- `subscriptions/` - Owner or admin can read/update; owner can create; admin can delete
+Uses a shared `isAdmin()` helper function (with `exists()` guard before `get()` to prevent errors on missing user docs).
+- `users/` - Authenticated users can read; users can create own doc; users or admins can update
+- `books/` - Public read; create open (for seeding); authenticated users can update (borrow/return changes availableCopies/status); only admins can delete
+- `subscriptions/` - Owner or admin can read/update/create; admin can delete
 - `loans/` - Borrower or admin can read/update; authenticated users can create
 - `contacts/` - Public create; admin can read/update/delete
 - `mail/` - Admin-only create; no read/update/delete (extension processes docs)
+
+## Firestore Indexes (`exult_flutter/firestore.indexes.json`)
+- `books`: status (asc) + createdAt (desc)
+- `loans`: borrowerId (asc) + borrowedAt (desc)
 
 ## Shared Attribute Tree System
 
@@ -179,3 +184,6 @@ Both category and genre filtering use the same widget system:
 13. Browse books auto-selects all categories/genres from loaded books on first load (via `_categoriesInitialized`/`_genresInitialized` flags)
 14. Manage Books filter dialogs read from admin providers to get book-derived values, auto-select when empty
 15. Manage Books DataTable has Genres column (purple badges) after Categories column (primary-colored badges)
+16. Admin user detail screen has subscription actions (create/edit/cancel), borrow book for user, and return book on active loans
+17. My Loans screen has active/returned tabs with full loan cards, return book flow
+18. `loanRepositoryProvider`, `myLoansProvider`, `LoanController`, `loanControllerProvider` live in `subscription_provider.dart`

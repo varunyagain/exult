@@ -30,13 +30,18 @@
 - `allBookGenresProvider` - Provider<Set<String>> - Distinct genres from available books
 - `allBookGenresAdminProvider` - Provider<Set<String>> - Distinct genres from ALL books (admin)
 
-## Subscription Providers (`presentation/providers/subscription_provider.dart`)
+## Subscription & Loan Providers (`presentation/providers/subscription_provider.dart`)
+- `loanRepositoryProvider` - Provider<LoanRepository> - DI for loan repo
+- `subscriptionRepositoryProvider` - Provider<SubscriptionRepository> - DI for subscription repo
 - `activeSubscriptionProvider` - StreamProvider<Subscription?>
 - `hasActiveSubscriptionProvider` - Provider<bool>
 - `canBorrowMoreProvider` - Provider<bool>
 - `remainingBooksProvider` - Provider<int>
 - `subscriptionControllerProvider` - StateNotifierProvider
   - Methods: createSubscription, cancelSubscription
+- `myLoansProvider` - StreamProvider<List<Loan>> - Current user's loans
+- `loanControllerProvider` - StateNotifierProvider<LoanController, AsyncValue<void>>
+  - Methods: borrowBook(book), returnBook(loan)
 
 ## Admin Providers (`presentation/providers/admin_provider.dart`)
 - `isAdminProvider` - Provider<bool> - Check admin role
