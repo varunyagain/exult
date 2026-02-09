@@ -125,6 +125,9 @@ class AppTheme {
         hintStyle: TextStyle(color: textSecondary.withOpacity(0.6)),
       ),
 
+      // Font families
+      fontFamily: 'Lato',
+
       // Text Theme
       textTheme: const TextTheme(
         displayLarge: TextStyle(
@@ -147,7 +150,7 @@ class AppTheme {
         ),
         headlineLarge: TextStyle(
           fontSize: 24,
-          fontWeight: FontWeight.bold,
+          fontWeight: FontWeight.w600,
           color: textPrimary,
           height: 1.3,
         ),
