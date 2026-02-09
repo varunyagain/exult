@@ -274,7 +274,7 @@ class _BrowseBooksScreenState extends ConsumerState<BrowseBooksScreen> {
                             gridDelegate:
                                 const SliverGridDelegateWithMaxCrossAxisExtent(
                               maxCrossAxisExtent: 250,
-                              childAspectRatio: 0.6,
+                              childAspectRatio: 0.48,
                               crossAxisSpacing: 16,
                               mainAxisSpacing: 16,
                             ),
