@@ -16,7 +16,7 @@ Future<void> main() async {
     {
       'title': 'To Kill a Mockingbird',
       'author': 'Harper Lee',
-      'isbn': '978-0061120084',
+      'isbn': '9780061120084',
       'description': 'A classic of modern American literature, this novel explores themes of racial injustice and moral growth in the Deep South during the 1930s. Through the eyes of young Scout Finch, we witness her father Atticus defend a Black man falsely accused of a crime, teaching timeless lessons about courage and compassion.',
       'coverImageUrl': 'https://covers.openlibrary.org/b/isbn/9780061120084-L.jpg',
       'ownerType': 'business',
@@ -29,7 +29,7 @@ Future<void> main() async {
     {
       'title': '1984',
       'author': 'George Orwell',
-      'isbn': '978-0451524935',
+      'isbn': '9780451524935',
       'description': 'A dystopian masterpiece that depicts a totalitarian society where independent thinking is a crime and Big Brother watches everyone. Winston Smith struggles against the Party\'s oppressive regime in this chilling warning about the dangers of absolute power.',
       'coverImageUrl': 'https://covers.openlibrary.org/b/isbn/9780451524935-L.jpg',
       'ownerType': 'business',
@@ -42,7 +42,7 @@ Future<void> main() async {
     {
       'title': 'Pride and Prejudice',
       'author': 'Jane Austen',
-      'isbn': '978-0141439518',
+      'isbn': '9780141439518',
       'description': 'One of the most beloved novels in the English language, this witty romance follows Elizabeth Bennet as she navigates issues of manners, morality, and marriage in early 19th-century England. Her spirited clash with the proud Mr. Darcy has captivated readers for over two centuries.',
       'coverImageUrl': 'https://covers.openlibrary.org/b/isbn/9780141439518-L.jpg',
       'ownerType': 'business',
@@ -56,7 +56,7 @@ Future<void> main() async {
     {
       'title': 'A Brief History of Time',
       'author': 'Stephen Hawking',
-      'isbn': '978-0553380163',
+      'isbn': '9780553380163',
       'description': 'Stephen Hawking\'s landmark work explores the nature of time, the Big Bang, black holes, and the search for a unified theory of physics. Written for non-specialists, this book makes complex cosmological concepts accessible to general readers while pondering the deepest questions about our universe.',
       'coverImageUrl': 'https://covers.openlibrary.org/b/isbn/9780553380163-L.jpg',
       'ownerType': 'business',
@@ -69,7 +69,7 @@ Future<void> main() async {
     {
       'title': 'The Selfish Gene',
       'author': 'Richard Dawkins',
-      'isbn': '978-0198788607',
+      'isbn': '9780198788607',
       'description': 'A revolutionary look at evolution from the gene\'s point of view. Dawkins explains how genes drive the evolution of life and introduces the concept of "memes" as units of cultural transmission. This influential work changed how we understand natural selection and animal behavior.',
       'coverImageUrl': 'https://covers.openlibrary.org/b/isbn/9780198788607-L.jpg',
       'ownerType': 'business',

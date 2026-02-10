@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:exult_flutter/core/utils/validators.dart';
 import 'package:exult_flutter/domain/models/book_model.dart';
 import 'package:exult_flutter/presentation/widgets/attribute_tree_widget.dart';
 
@@ -78,8 +79,8 @@ class _BookFormDialogState extends State<BookFormDialog> {
     _selectedCategories = book?.categories.toList() ?? [];
     _selectedGenres = book?.genres.toList() ?? [];
 
-    // Auto-check ISBN when focus leaves the field
-    if (widget.isUserMode && widget.onIsbnLookup != null) {
+    // Auto-check ISBN when focus leaves the field (new books with lookup)
+    if (widget.onIsbnLookup != null && widget.book == null) {
       _isbnFocusNode.addListener(_onIsbnFocusChange);
     }
   }
@@ -106,7 +107,7 @@ class _BookFormDialogState extends State<BookFormDialog> {
   }
 
   Future<void> _checkIsbn() async {
-    final isbn = _isbnController.text.trim();
+    final isbn = Validators.normalizeIsbn(_isbnController.text.trim());
     if (isbn.isEmpty || widget.onIsbnLookup == null) {
       // Clear any previous match if ISBN was emptied
       if (_isbnMatch != null || _lastCheckedIsbn.isNotEmpty) {
@@ -147,7 +148,7 @@ class _BookFormDialogState extends State<BookFormDialog> {
   @override
   Widget build(BuildContext context) {
     final isEditing = widget.book != null;
-    final isUserNew = widget.isUserMode && !isEditing;
+    final canLookupIsbn = widget.onIsbnLookup != null && !isEditing;
 
     return AlertDialog(
       title: Text(
@@ -162,8 +163,8 @@ class _BookFormDialogState extends State<BookFormDialog> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ISBN field for user mode (new books only) — auto-checks on blur
-              if (isUserNew) ...[
+              // ISBN field (new books with lookup) — auto-checks on blur
+              if (canLookupIsbn) ...[
                 TextFormField(
                   controller: _isbnController,
                   focusNode: _isbnFocusNode,
@@ -200,9 +201,9 @@ class _BookFormDialogState extends State<BookFormDialog> {
                 ],
               ],
 
-              // Show the editable form only when there's no ISBN match (user mode)
-              // or always for admin mode / editing
-              if (!isUserNew || !_hasIsbnMatch) ...[
+              // Show the editable form only when there's no ISBN match
+              // or always when lookup is not available
+              if (!canLookupIsbn || !_hasIsbnMatch) ...[
                 Form(
                   key: _formKey,
                   child: Column(
@@ -247,8 +248,8 @@ class _BookFormDialogState extends State<BookFormDialog> {
                       ),
                       const SizedBox(height: 16),
 
-                      // ISBN (for admin mode or editing) and Cover URL Row
-                      if (!widget.isUserMode || isEditing) ...[
+                      // ISBN and Cover URL Row (when lookup field is not shown above)
+                      if (!canLookupIsbn) ...[
                         Row(
                           children: [
                             Expanded(
@@ -585,7 +586,7 @@ class _BookFormDialogState extends State<BookFormDialog> {
           child: const Text('Cancel'),
         ),
         // Only show submit button when there's no ISBN match blocking
-        if (!isUserNew || !_hasIsbnMatch)
+        if (!canLookupIsbn || !_hasIsbnMatch)
           FilledButton(
             onPressed: _submit,
             child: Text(widget.book != null ? 'Update' : (widget.isUserMode ? 'List Book' : 'Add Book')),
@@ -736,7 +737,9 @@ class _BookFormDialogState extends State<BookFormDialog> {
             const Divider(),
             const SizedBox(height: 8),
             Text(
-              'This book is already in our catalog. Your copy will be added and auto-approved.',
+              widget.isUserMode
+                  ? 'This book is already in our catalog. Your copy will be added and auto-approved.'
+                  : 'This book already exists in the catalog. An additional copy will be added.',
               style: TextStyle(color: Colors.grey.shade700),
             ),
             const SizedBox(height: 12),
@@ -750,7 +753,7 @@ class _BookFormDialogState extends State<BookFormDialog> {
                   ));
                 },
                 icon: const Icon(Icons.add),
-                label: const Text('Add My Copy'),
+                label: Text(widget.isUserMode ? 'Add My Copy' : 'Add Copy'),
               ),
             ),
           ],
@@ -793,7 +796,7 @@ class _BookFormDialogState extends State<BookFormDialog> {
         author: _authorController.text.trim(),
         isbn: _isbnController.text.trim().isEmpty
             ? null
-            : _isbnController.text.trim(),
+            : Validators.normalizeIsbn(_isbnController.text.trim()),
         description: _descriptionController.text.trim(),
         coverImageUrl: _coverUrlController.text.trim().isEmpty
             ? null
@@ -811,10 +814,11 @@ class _BookFormDialogState extends State<BookFormDialog> {
         createdAt: widget.book?.createdAt ?? DateTime.now(),
       );
 
-      if (widget.isUserMode) {
+      if (widget.onIsbnLookup != null) {
+        // Lookup-enabled flows return BookFormResult (handles dedup)
         Navigator.of(context).pop(BookFormResult(book: book));
       } else {
-        // Admin mode returns Book directly for backward compat
+        // No-lookup flows return Book directly (admin edit, etc.)
         Navigator.of(context).pop(book);
       }
     }

@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:exult_flutter/core/constants/firebase_constants.dart';
+import 'package:exult_flutter/core/utils/validators.dart';
 import 'package:exult_flutter/domain/models/book_model.dart';
 import 'package:exult_flutter/domain/repositories/book_repository.dart';
 
@@ -132,11 +133,16 @@ class FirebaseBookRepository implements BookRepository {
 
   @override
   Future<Book?> findBookByIsbn(String isbn) async {
+    // Query both the raw input and the digits-only form so we match
+    // existing books stored with hyphens/spaces as well as newly
+    // normalized entries.
+    final normalized = Validators.normalizeIsbn(isbn);
+    final candidates = {isbn, normalized}.toList(); // dedups if identical
     // Query by ISBN only — no composite index needed.
     // Filter out pending books in code.
     final snapshot = await _firestore
         .collection(FirebaseConstants.booksCollection)
-        .where('isbn', isEqualTo: isbn)
+        .where('isbn', whereIn: candidates)
         .get();
 
     if (snapshot.docs.isEmpty) return null;
@@ -169,9 +175,12 @@ class FirebaseBookRepository implements BookRepository {
       final totalCopies = (data['totalCopies'] as num?)?.toInt() ?? 1;
       final availableCopies = (data['availableCopies'] as num?)?.toInt() ?? 1;
 
-      contributors[userId] = (contributors[userId] ?? 0) + 1;
-      if (!contributorIds.contains(userId)) {
-        contributorIds.add(userId);
+      // Only track contributor when a real userId is provided
+      if (userId.isNotEmpty) {
+        contributors[userId] = (contributors[userId] ?? 0) + 1;
+        if (!contributorIds.contains(userId)) {
+          contributorIds.add(userId);
+        }
       }
 
       transaction.update(docRef, {

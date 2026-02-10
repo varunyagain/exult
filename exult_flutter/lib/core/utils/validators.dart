@@ -66,12 +66,16 @@ class Validators {
     return null;
   }
 
+  /// Strip hyphens and spaces from an ISBN, returning digits only.
+  static String normalizeIsbn(String isbn) =>
+      isbn.replaceAll(RegExp(r'[\s-]'), '');
+
   /// Validate ISBN (both ISBN-10 and ISBN-13)
   static String? isbn(String? value) {
     if (value == null || value.isEmpty) {
       return null; // ISBN is optional
     }
-    final cleanValue = value.replaceAll(RegExp(r'[\s-]'), '');
+    final cleanValue = normalizeIsbn(value);
     if (cleanValue.length != 10 && cleanValue.length != 13) {
       return 'ISBN must be 10 or 13 digits';
     }

@@ -609,26 +609,57 @@ class _AdminBooksScreenState extends ConsumerState<AdminBooksScreen> {
   Future<void> _showBookDialog(BuildContext context, WidgetRef ref,
       {Book? book}) async {
     final isEditing = book != null;
-    final result = await showDialog<Book>(
-      context: context,
-      builder: (context) => shared.BookFormDialog(book: book),
-    );
+    final bookRepository = ref.read(bookRepositoryProvider);
 
-    if (result != null) {
-      final bookRepository = ref.read(bookRepositoryProvider);
+    if (isEditing) {
+      // Edit flow — no ISBN lookup, returns Book directly
+      final result = await showDialog<Book>(
+        context: context,
+        builder: (context) => shared.BookFormDialog(book: book),
+      );
+      if (result == null) return;
       try {
-        if (isEditing) {
-          await bookRepository.updateBook(result);
+        await bookRepository.updateBook(result);
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Book updated successfully'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+        ref.invalidate(allBooksProvider);
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+          );
+        }
+      }
+    } else {
+      // Add flow — ISBN lookup enabled, returns BookFormResult
+      final result = await showDialog<shared.BookFormResult>(
+        context: context,
+        builder: (context) => shared.BookFormDialog(
+          onIsbnLookup: (isbn) => bookRepository.findBookByIsbn(isbn),
+        ),
+      );
+      if (result == null) return;
+      try {
+        if (result.isDuplicate && result.existingBook != null) {
+          // Increment copy count on existing book
+          await bookRepository.addCopyToBook(result.existingBook!.id, '');
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Book updated successfully'),
+              SnackBar(
+                content: Text(
+                    'Added a copy to "${result.existingBook!.title}"'),
                 backgroundColor: Colors.green,
               ),
             );
           }
-        } else {
-          await bookRepository.createBook(result);
+        } else if (result.book != null) {
+          await bookRepository.createBook(result.book!);
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
@@ -642,10 +673,7 @@ class _AdminBooksScreenState extends ConsumerState<AdminBooksScreen> {
       } catch (e) {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error: $e'),
-              backgroundColor: Colors.red,
-            ),
+            SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
           );
         }
       }
