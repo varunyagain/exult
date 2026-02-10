@@ -18,7 +18,7 @@ enum BookStatus {
   String get displayName {
     switch (this) {
       case BookStatus.pending:
-        return 'Pending';
+        return 'Pending Approval';
       case BookStatus.available:
         return 'Available';
       case BookStatus.borrowed:

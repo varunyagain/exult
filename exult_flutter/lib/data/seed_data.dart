@@ -93,5 +93,4 @@ class SeedData {
     }
 
     print('Done! ${sampleBooks.length} books added successfully.');
-  }
-}
+  }}

@@ -28,21 +28,25 @@ class BookCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Book Cover Image
-            AspectRatio(
-              aspectRatio: 2 / 3,
-              child: book.coverImageUrl != null && book.coverImageUrl!.isNotEmpty
-                  ? Image.network(
-                      book.coverImageUrl!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return _buildPlaceholderCover(context);
-                      },
-                    )
-                  : _buildPlaceholderCover(context),
+            Expanded(
+              flex: 3,
+              child: SizedBox(
+                width: double.infinity,
+                child: book.coverImageUrl != null && book.coverImageUrl!.isNotEmpty
+                    ? Image.network(
+                        book.coverImageUrl!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return _buildPlaceholderCover(context);
+                        },
+                      )
+                    : _buildPlaceholderCover(context),
+              ),
             ),
 
             // Book Details
             Expanded(
+              flex: 2,
               child: Padding(
                 padding: const EdgeInsets.all(12),
                 child: Column(

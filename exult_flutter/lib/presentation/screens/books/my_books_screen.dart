@@ -3,9 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:exult_flutter/core/constants/route_constants.dart';
+import 'package:exult_flutter/core/constants/genre_tree.dart';
 import 'package:exult_flutter/domain/models/book_model.dart';
 import 'package:exult_flutter/presentation/providers/auth_provider.dart';
 import 'package:exult_flutter/presentation/providers/books_provider.dart';
+import 'package:exult_flutter/presentation/widgets/attribute_tree_widget.dart';
 import 'package:exult_flutter/presentation/widgets/book_form_dialog.dart';
 
 class MyBooksScreen extends ConsumerWidget {
@@ -37,18 +39,79 @@ class MyBooksScreen extends ConsumerWidget {
   }
 }
 
-class _MyBooksBody extends ConsumerWidget {
+class _MyBooksBody extends ConsumerStatefulWidget {
   const _MyBooksBody();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_MyBooksBody> createState() => _MyBooksBodyState();
+}
+
+class _MyBooksBodyState extends ConsumerState<_MyBooksBody> {
+  final TextEditingController _searchController = TextEditingController();
+  bool _isSearching = false;
+  bool _categoriesInitialized = false;
+  bool _genresInitialized = false;
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final userBooksAsync = ref.watch(userBooksProvider);
     final currentUser = ref.watch(currentUserProvider).valueOrNull;
+    final selectedCategories = ref.watch(selectedMyBooksCategoriesProvider);
+    final categoriesWithBooks = ref.watch(userBookCategoriesProvider);
+    final selectedGenres = ref.watch(selectedMyBooksGenresProvider);
+    final genresWithBooks = ref.watch(userBookGenresProvider);
+
+    // Auto-select all attribute values on first load
+    if (!_categoriesInitialized && categoriesWithBooks.isNotEmpty) {
+      _categoriesInitialized = true;
+      if (selectedCategories.isEmpty) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          ref.read(selectedMyBooksCategoriesProvider.notifier).state =
+              Set.from(categoriesWithBooks);
+        });
+      }
+    }
+    if (!_genresInitialized && genresWithBooks.isNotEmpty) {
+      _genresInitialized = true;
+      if (selectedGenres.isEmpty) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          ref.read(selectedMyBooksGenresProvider.notifier).state =
+              Set.from(genresWithBooks);
+        });
+      }
+    }
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('My Books'),
+        title: _isSearching
+            ? TextField(
+                controller: _searchController,
+                autofocus: true,
+                decoration: const InputDecoration(
+                  hintText: 'Search my books...',
+                  border: InputBorder.none,
+                  hintStyle: TextStyle(color: Colors.white70),
+                ),
+                style: const TextStyle(color: Colors.white),
+                onChanged: (_) => setState(() {}),
+              )
+            : const Text('My Books'),
         actions: [
+          IconButton(
+            icon: Icon(_isSearching ? Icons.close : Icons.search),
+            onPressed: () {
+              setState(() {
+                _isSearching = !_isSearching;
+                if (!_isSearching) _searchController.clear();
+              });
+            },
+          ),
           TextButton(
             onPressed: () => context.go(RouteConstants.books),
             child: const Text('Browse Books'),
@@ -80,74 +143,185 @@ class _MyBooksBody extends ConsumerWidget {
         icon: const Icon(Icons.add),
         label: const Text('List a Book'),
       ),
-      body: userBooksAsync.when(
-        data: (books) {
-          if (books.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.library_add,
-                    size: 64,
-                    color: Theme.of(context).primaryColor.withOpacity(0.3),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    "You haven't listed any books yet",
-                    style: Theme.of(context).textTheme.headlineSmall,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Tap the + button to list your first book',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Theme.of(context).textTheme.bodySmall?.color,
-                        ),
-                  ),
-                  const SizedBox(height: 24),
-                  FilledButton.icon(
-                    onPressed: () => _showListBookDialog(context, ref),
-                    icon: const Icon(Icons.add),
-                    label: const Text('List a Book'),
-                  ),
-                ],
+      body: Row(
+        children: [
+          // Filter sidebar
+          Container(
+            width: 240,
+            decoration: BoxDecoration(
+              border: Border(
+                right: BorderSide(
+                  color: Theme.of(context).dividerColor,
+                ),
               ),
-            );
-          }
-
-          return GridView.builder(
-            padding: const EdgeInsets.all(24),
-            gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-              maxCrossAxisExtent: 300,
-              childAspectRatio: 0.65,
-              crossAxisSpacing: 16,
-              mainAxisSpacing: 16,
             ),
-            itemCount: books.length,
-            itemBuilder: (context, index) {
-              return _UserBookCard(
-                book: books[index],
-                userId: currentUser?.uid ?? '',
-              );
-            },
-          );
-        },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error_outline, size: 64, color: Colors.red),
-              const SizedBox(height: 16),
-              Text('Error loading your books: $error'),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () => ref.invalidate(userBooksProvider),
-                child: const Text('Retry'),
-              ),
-            ],
+            child: Column(
+              children: [
+                // Category tree
+                Expanded(
+                  child: AttributeTreeWidget(
+                    availableValues: categoriesWithBooks,
+                    selectedValues: selectedCategories,
+                    onSelectionChanged: (newSelection) {
+                      ref.read(selectedMyBooksCategoriesProvider.notifier).state =
+                          newSelection;
+                    },
+                  ),
+                ),
+                const Divider(height: 1),
+                // Genre tree
+                Expanded(
+                  child: AttributeTreeWidget(
+                    treeData: writingGenreTree,
+                    title: 'Genres',
+                    icon: Icons.auto_stories,
+                    availableValues: genresWithBooks,
+                    selectedValues: selectedGenres,
+                    onSelectionChanged: (newSelection) {
+                      ref.read(selectedMyBooksGenresProvider.notifier).state =
+                          newSelection;
+                    },
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
+
+          // Books Grid
+          Expanded(
+            child: userBooksAsync.when(
+              data: (books) {
+                // Apply category filter
+                var filteredBooks = books;
+                if (selectedCategories.isNotEmpty) {
+                  filteredBooks = filteredBooks.where((book) {
+                    return book.categories
+                        .any((cat) => selectedCategories.contains(cat));
+                  }).toList();
+                }
+
+                // Apply genre filter
+                if (selectedGenres.isNotEmpty) {
+                  filteredBooks = filteredBooks.where((book) {
+                    return book.genres
+                        .any((g) => selectedGenres.contains(g));
+                  }).toList();
+                }
+
+                // Apply search filter
+                if (_isSearching && _searchController.text.isNotEmpty) {
+                  final query = _searchController.text.toLowerCase();
+                  filteredBooks = filteredBooks.where((book) {
+                    return book.title.toLowerCase().contains(query) ||
+                        book.author.toLowerCase().contains(query);
+                  }).toList();
+                }
+
+                if (filteredBooks.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          books.isEmpty
+                              ? Icons.library_add
+                              : (_isSearching
+                                  ? Icons.search_off
+                                  : Icons.library_books_outlined),
+                          size: 64,
+                          color: Theme.of(context)
+                              .primaryColor
+                              .withOpacity(0.3),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          books.isEmpty
+                              ? "You haven't listed any books yet"
+                              : (_isSearching
+                                  ? 'No books found'
+                                  : 'No books match selected filters'),
+                          style:
+                              Theme.of(context).textTheme.headlineSmall,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          books.isEmpty
+                              ? 'Tap the + button to list your first book'
+                              : (_isSearching
+                                  ? 'Try a different search term'
+                                  : 'Try selecting different filters'),
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodyMedium
+                              ?.copyWith(
+                                color: Theme.of(context)
+                                    .textTheme
+                                    .bodySmall
+                                    ?.color,
+                              ),
+                        ),
+                        if (books.isEmpty) ...[
+                          const SizedBox(height: 24),
+                          FilledButton.icon(
+                            onPressed: () =>
+                                _showListBookDialog(context, ref),
+                            icon: const Icon(Icons.add),
+                            label: const Text('List a Book'),
+                          ),
+                        ],
+                      ],
+                    ),
+                  );
+                }
+
+                return GridView.builder(
+                  padding: const EdgeInsets.all(24),
+                  gridDelegate:
+                      const SliverGridDelegateWithMaxCrossAxisExtent(
+                    maxCrossAxisExtent: 250,
+                    childAspectRatio: 0.42,
+                    crossAxisSpacing: 16,
+                    mainAxisSpacing: 16,
+                  ),
+                  itemCount: filteredBooks.length,
+                  itemBuilder: (context, index) {
+                    return _MyBookCard(
+                      book: filteredBooks[index],
+                      userId: currentUser?.uid ?? '',
+                    );
+                  },
+                );
+              },
+              loading: () =>
+                  const Center(child: CircularProgressIndicator()),
+              error: (error, _) => Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.error_outline,
+                        size: 64, color: Colors.red),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Error loading your books',
+                      style: Theme.of(context).textTheme.headlineSmall,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      error.toString(),
+                      style: Theme.of(context).textTheme.bodyMedium,
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: () => ref.invalidate(userBooksProvider),
+                      child: const Text('Retry'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -168,10 +342,10 @@ class _MyBooksBody extends ConsumerWidget {
     final controller = ref.read(userBookControllerProvider.notifier);
 
     if (result.isDuplicate && result.existingBook != null) {
-      // Add copy to existing book
       await ref
           .read(bookRepositoryProvider)
-          .addCopyToBook(result.existingBook!.id, ref.read(currentUserProvider).valueOrNull?.uid ?? '');
+          .addCopyToBook(result.existingBook!.id,
+              ref.read(currentUserProvider).valueOrNull?.uid ?? '');
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -206,11 +380,12 @@ class _MyBooksBody extends ConsumerWidget {
   }
 }
 
-class _UserBookCard extends ConsumerWidget {
+/// Book card for My Books — matches Browse Books card style with user actions.
+class _MyBookCard extends ConsumerWidget {
   final Book book;
   final String userId;
 
-  const _UserBookCard({required this.book, required this.userId});
+  const _MyBookCard({required this.book, required this.userId});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -225,142 +400,176 @@ class _UserBookCard extends ConsumerWidget {
 
     return Card(
       clipBehavior: Clip.antiAlias,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Book Cover Image
-          AspectRatio(
-            aspectRatio: 2 / 3,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                book.coverImageUrl != null && book.coverImageUrl!.isNotEmpty
-                    ? Image.network(
-                        book.coverImageUrl!,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return _buildPlaceholderCover(context);
-                        },
-                      )
-                    : _buildPlaceholderCover(context),
-                // Status badge overlay
-                Positioned(
-                  top: 8,
-                  right: 8,
-                  child: _buildStatusBadge(context),
+      child: InkWell(
+        onTap: () => context.go('${RouteConstants.books}/${book.id}'),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Book Cover Image with status badge overlay
+            Expanded(
+              flex: 3,
+              child: SizedBox(
+                width: double.infinity,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    book.coverImageUrl != null &&
+                            book.coverImageUrl!.isNotEmpty
+                        ? Image.network(
+                            book.coverImageUrl!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return _buildPlaceholderCover(context);
+                            },
+                          )
+                        : _buildPlaceholderCover(context),
+                    // Status badge overlay
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: _buildStatusBadge(context),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          ),
-
-          // Book Details
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Title
-                  Text(
-                    book.title,
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 2),
-
-                  // Author
-                  Text(
-                    book.author,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context).textTheme.bodySmall?.color,
-                        ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const Spacer(),
-
-                  // Copies info
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.content_copy,
-                        size: 14,
-                        color: Theme.of(context).colorScheme.secondary,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        'Your copies: $userCopies',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Theme.of(context).colorScheme.secondary,
-                              fontWeight: FontWeight.w600,
-                            ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-
-                  // Deposit
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.account_balance_wallet_outlined,
-                        size: 14,
-                        color: Theme.of(context).colorScheme.secondary,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        'Deposit: ${currencyFormat.format(book.depositAmount)}',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Theme.of(context).colorScheme.secondary,
-                            ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-
-                  // Actions
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      if (book.isPending && isOwner) ...[
-                        IconButton(
-                          icon: const Icon(Icons.edit, size: 20),
-                          tooltip: 'Edit',
-                          onPressed: () =>
-                              _showEditDialog(context, ref),
-                          visualDensity: VisualDensity.compact,
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.delete, size: 20),
-                          tooltip: 'Delete',
-                          color: Colors.red,
-                          onPressed: () =>
-                              _confirmDelete(context, ref),
-                          visualDensity: VisualDensity.compact,
-                        ),
-                      ] else if (!book.isPending && userCopies > 0) ...[
-                        TextButton.icon(
-                          onPressed: () =>
-                              _confirmWithdraw(context, ref),
-                          icon: const Icon(Icons.remove_circle_outline,
-                              size: 18),
-                          label: const Text('Withdraw'),
-                          style: TextButton.styleFrom(
-                            foregroundColor: Colors.orange.shade700,
-                            visualDensity: VisualDensity.compact,
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ],
               ),
             ),
-          ),
-        ],
+
+            // Book Details
+            Expanded(
+              flex: 2,
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Title
+                    Text(
+                      book.title,
+                      style:
+                          Theme.of(context).textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+
+                    // Author
+                    Text(
+                      book.author,
+                      style:
+                          Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                color: Theme.of(context)
+                                    .textTheme
+                                    .bodySmall
+                                    ?.color,
+                              ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const Spacer(),
+
+                    // Copies info
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.content_copy,
+                          size: 14,
+                          color: Theme.of(context).colorScheme.secondary,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Your copies: $userCopies',
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodySmall
+                              ?.copyWith(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .secondary,
+                                fontWeight: FontWeight.w600,
+                              ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+
+                    // Deposit Amount
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.account_balance_wallet_outlined,
+                          size: 14,
+                          color: Theme.of(context).colorScheme.secondary,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Deposit: ${currencyFormat.format(book.depositAmount)}',
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodySmall
+                              ?.copyWith(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .secondary,
+                                fontWeight: FontWeight.w600,
+                              ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+
+                    // Actions
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        if (book.isPending && isOwner) ...[
+                          IconButton(
+                            icon: const Icon(Icons.edit, size: 18),
+                            tooltip: 'Edit',
+                            onPressed: () =>
+                                _showEditDialog(context, ref),
+                            visualDensity: VisualDensity.compact,
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                          ),
+                          const SizedBox(width: 8),
+                          IconButton(
+                            icon: const Icon(Icons.delete, size: 18),
+                            tooltip: 'Delete',
+                            color: Colors.red,
+                            onPressed: () =>
+                                _confirmDelete(context, ref),
+                            visualDensity: VisualDensity.compact,
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                          ),
+                        ] else if (!book.isPending &&
+                            userCopies > 0) ...[
+                          TextButton.icon(
+                            onPressed: () =>
+                                _confirmWithdraw(context, ref),
+                            icon: const Icon(
+                                Icons.remove_circle_outline,
+                                size: 16),
+                            label: const Text('Withdraw',
+                                style: TextStyle(fontSize: 12)),
+                            style: TextButton.styleFrom(
+                              foregroundColor: Colors.orange.shade700,
+                              visualDensity: VisualDensity.compact,
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 4),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -374,7 +583,7 @@ class _UserBookCard extends ConsumerWidget {
           children: [
             Icon(
               Icons.book,
-              size: 48,
+              size: 64,
               color: Theme.of(context).primaryColor.withOpacity(0.3),
             ),
             const SizedBox(height: 8),
@@ -383,7 +592,8 @@ class _UserBookCard extends ConsumerWidget {
               child: Text(
                 book.title,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).primaryColor.withOpacity(0.5),
+                      color:
+                          Theme.of(context).primaryColor.withOpacity(0.5),
                     ),
                 textAlign: TextAlign.center,
                 maxLines: 3,
@@ -406,7 +616,7 @@ class _UserBookCard extends ConsumerWidget {
       case BookStatus.pending:
         bgColor = Colors.amber.shade100;
         textColor = Colors.amber.shade800;
-        label = 'Pending';
+        label = 'Pending Approval';
         icon = Icons.hourglass_top;
         break;
       case BookStatus.available:

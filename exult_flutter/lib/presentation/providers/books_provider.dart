@@ -132,6 +132,34 @@ final userBooksProvider = StreamProvider<List<Book>>((ref) {
   return bookRepository.getUserBooks(currentUser.uid);
 });
 
+/// Provider that collects all distinct category names across user's books.
+final userBookCategoriesProvider = Provider<Set<String>>((ref) {
+  final booksAsync = ref.watch(userBooksProvider);
+  final books = booksAsync.valueOrNull ?? [];
+  final categories = <String>{};
+  for (final book in books) {
+    categories.addAll(book.categories);
+  }
+  return categories;
+});
+
+/// Provider that collects all distinct genre names across user's books.
+final userBookGenresProvider = Provider<Set<String>>((ref) {
+  final booksAsync = ref.watch(userBooksProvider);
+  final books = booksAsync.valueOrNull ?? [];
+  final genres = <String>{};
+  for (final book in books) {
+    genres.addAll(book.genres);
+  }
+  return genres;
+});
+
+/// Selected categories for My Books filter sidebar
+final selectedMyBooksCategoriesProvider = StateProvider<Set<String>>((ref) => {});
+
+/// Selected genres for My Books filter sidebar
+final selectedMyBooksGenresProvider = StateProvider<Set<String>>((ref) => {});
+
 /// Controller for user book listing operations
 class UserBookController extends StateNotifier<AsyncValue<void>> {
   final BookRepository _bookRepository;

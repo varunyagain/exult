@@ -29,7 +29,7 @@ void main() async {
   try {
     await SeedData.seedBooks();
   } catch (e) {
-    print('Seeding skipped: $e');
+    print('Seeding/migration skipped: $e');
   }
 
   runApp(

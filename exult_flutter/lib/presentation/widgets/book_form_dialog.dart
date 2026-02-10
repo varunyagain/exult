@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:exult_flutter/core/utils/validators.dart';
+import 'package:exult_flutter/data/services/google_books_service.dart';
 import 'package:exult_flutter/domain/models/book_model.dart';
 import 'package:exult_flutter/presentation/widgets/attribute_tree_widget.dart';
 
@@ -50,11 +51,15 @@ class _BookFormDialogState extends State<BookFormDialog> {
   final FocusNode _isbnFocusNode = FocusNode();
   bool _isCheckingIsbn = false;
   Book? _isbnMatch;
+  GoogleBooksResult? _googleBooksMatch;
+  bool _lookupComplete = false;
   String _lastCheckedIsbn = '';
+  late final GoogleBooksService _googleBooksService;
 
   @override
   void initState() {
     super.initState();
+    _googleBooksService = GoogleBooksService();
     final book = widget.book;
     _titleController = TextEditingController(text: book?.title ?? '');
     _authorController = TextEditingController(text: book?.author ?? '');
@@ -87,6 +92,7 @@ class _BookFormDialogState extends State<BookFormDialog> {
 
   @override
   void dispose() {
+    _googleBooksService.dispose();
     _isbnFocusNode.removeListener(_onIsbnFocusChange);
     _isbnFocusNode.dispose();
     _titleController.dispose();
@@ -110,9 +116,11 @@ class _BookFormDialogState extends State<BookFormDialog> {
     final isbn = Validators.normalizeIsbn(_isbnController.text.trim());
     if (isbn.isEmpty || widget.onIsbnLookup == null) {
       // Clear any previous match if ISBN was emptied
-      if (_isbnMatch != null || _lastCheckedIsbn.isNotEmpty) {
+      if (_isbnMatch != null || _googleBooksMatch != null || _lastCheckedIsbn.isNotEmpty) {
         setState(() {
           _isbnMatch = null;
+          _googleBooksMatch = null;
+          _lookupComplete = false;
           _lastCheckedIsbn = '';
         });
       }
@@ -124,13 +132,52 @@ class _BookFormDialogState extends State<BookFormDialog> {
     setState(() {
       _isCheckingIsbn = true;
       _isbnMatch = null;
+      _googleBooksMatch = null;
+      _lookupComplete = false;
     });
 
     try {
+      // Tier 1: Catalog lookup
       final match = await widget.onIsbnLookup!(isbn);
       if (!mounted) return;
+
+      if (match != null) {
+        setState(() {
+          _isbnMatch = match;
+          _lastCheckedIsbn = isbn;
+          _isCheckingIsbn = false;
+        });
+        return;
+      }
+
+      // Tier 2: Google Books lookup
+      try {
+        final googleMatch = await _googleBooksService.lookupByIsbn(isbn);
+        if (!mounted) return;
+
+        if (googleMatch != null) {
+          _titleController.text = googleMatch.title;
+          _authorController.text = googleMatch.author;
+          _descriptionController.text = googleMatch.description;
+          if (googleMatch.coverImageUrl != null) {
+            _coverUrlController.text = googleMatch.coverImageUrl!;
+          }
+          setState(() {
+            _googleBooksMatch = googleMatch;
+            _lookupComplete = true;
+            _lastCheckedIsbn = isbn;
+            _isCheckingIsbn = false;
+          });
+          return;
+        }
+      } catch (_) {
+        // Google Books errors degrade gracefully to tier 3
+      }
+
+      // Tier 3: No match anywhere
+      if (!mounted) return;
       setState(() {
-        _isbnMatch = match;
+        _lookupComplete = true;
         _lastCheckedIsbn = isbn;
         _isCheckingIsbn = false;
       });
@@ -138,12 +185,14 @@ class _BookFormDialogState extends State<BookFormDialog> {
       if (!mounted) return;
       setState(() {
         _isCheckingIsbn = false;
+        _lookupComplete = true;
         _lastCheckedIsbn = isbn;
       });
     }
   }
 
   bool get _hasIsbnMatch => _isbnMatch != null;
+  bool get _hasGoogleBooksMatch => _googleBooksMatch != null;
 
   @override
   Widget build(BuildContext context) {
@@ -184,10 +233,12 @@ class _BookFormDialogState extends State<BookFormDialog> {
                         : null,
                   ),
                   onChanged: (_) {
-                    // Clear match when ISBN changes
-                    if (_hasIsbnMatch) {
+                    // Clear matches when ISBN changes
+                    if (_hasIsbnMatch || _hasGoogleBooksMatch || _lookupComplete) {
                       setState(() {
                         _isbnMatch = null;
+                        _googleBooksMatch = null;
+                        _lookupComplete = false;
                         _lastCheckedIsbn = '';
                       });
                     }
@@ -201,9 +252,51 @@ class _BookFormDialogState extends State<BookFormDialog> {
                 ],
               ],
 
-              // Show the editable form only when there's no ISBN match
+              // Show the form when there's no tier-1 ISBN match
               // or always when lookup is not available
               if (!canLookupIsbn || !_hasIsbnMatch) ...[
+                // Info banners for tier 2 and tier 3
+                if (canLookupIsbn && _lookupComplete && _hasGoogleBooksMatch) ...[
+                  Card(
+                    color: Colors.green.shade50,
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Row(
+                        children: [
+                          Icon(Icons.auto_awesome, color: Colors.green.shade700, size: 20),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Book details found via Google Books and prefilled below.',
+                              style: TextStyle(color: Colors.green.shade700),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                ] else if (canLookupIsbn && _lookupComplete && !_hasGoogleBooksMatch) ...[
+                  Card(
+                    color: Colors.orange.shade50,
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Row(
+                        children: [
+                          Icon(Icons.info_outline, color: Colors.orange.shade700, size: 20),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'No book found for this ISBN. Please fill in the details manually.',
+                              style: TextStyle(color: Colors.orange.shade700),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                ],
                 Form(
                   key: _formKey,
                   child: Column(
@@ -216,6 +309,7 @@ class _BookFormDialogState extends State<BookFormDialog> {
                           Expanded(
                             child: TextFormField(
                               controller: _titleController,
+                              readOnly: _hasGoogleBooksMatch,
                               decoration: const InputDecoration(
                                 labelText: 'Title *',
                                 border: OutlineInputBorder(),
@@ -232,6 +326,7 @@ class _BookFormDialogState extends State<BookFormDialog> {
                           Expanded(
                             child: TextFormField(
                               controller: _authorController,
+                              readOnly: _hasGoogleBooksMatch,
                               decoration: const InputDecoration(
                                 labelText: 'Author *',
                                 border: OutlineInputBorder(),
@@ -276,6 +371,7 @@ class _BookFormDialogState extends State<BookFormDialog> {
                       ] else ...[
                         TextFormField(
                           controller: _coverUrlController,
+                          readOnly: _hasGoogleBooksMatch,
                           decoration: const InputDecoration(
                             labelText: 'Cover Image URL',
                             border: OutlineInputBorder(),
@@ -287,6 +383,7 @@ class _BookFormDialogState extends State<BookFormDialog> {
                       // Description
                       TextFormField(
                         controller: _descriptionController,
+                        readOnly: _hasGoogleBooksMatch,
                         decoration: const InputDecoration(
                           labelText: 'Description',
                           border: OutlineInputBorder(),
@@ -585,11 +682,15 @@ class _BookFormDialogState extends State<BookFormDialog> {
           onPressed: () => Navigator.of(context).pop(),
           child: const Text('Cancel'),
         ),
-        // Only show submit button when there's no ISBN match blocking
+        // Only show submit button when there's no tier-1 ISBN match blocking
         if (!canLookupIsbn || !_hasIsbnMatch)
           FilledButton(
             onPressed: _submit,
-            child: Text(widget.book != null ? 'Update' : (widget.isUserMode ? 'List Book' : 'Add Book')),
+            child: Text(widget.book != null
+                ? 'Update'
+                : _hasGoogleBooksMatch
+                    ? 'Add to Catalog'
+                    : (widget.isUserMode ? 'List Book' : 'Add Book')),
           ),
       ],
     );

@@ -213,7 +213,7 @@ class _AdminBooksScreenState extends ConsumerState<AdminBooksScreen> {
                           items: const [
                             DropdownMenuItem(value: null, child: Text('All')),
                             DropdownMenuItem(
-                                value: 'pending', child: Text('Pending')),
+                                value: 'pending', child: Text('Pending Approval')),
                             DropdownMenuItem(
                                 value: 'available', child: Text('Available')),
                             DropdownMenuItem(
