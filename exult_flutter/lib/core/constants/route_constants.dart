@@ -15,6 +15,7 @@ class RouteConstants {
   static const String bookDetail = '/books/:id';
   static const String profile = '/profile';
   static const String loans = '/loans';
+  static const String myBooks = '/my-books';
   static const String subscribe = '/subscribe';
 
   // Admin routes (require admin role)

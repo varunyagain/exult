@@ -97,6 +97,11 @@ class _BrowseBooksScreenState extends ConsumerState<BrowseBooksScreen> {
             ),
           if (!isAdmin)
             TextButton(
+              onPressed: () => context.go(RouteConstants.myBooks),
+              child: const Text('My Books'),
+            ),
+          if (!isAdmin)
+            TextButton(
               onPressed: () => context.go(RouteConstants.loans),
               child: const Text('My Loans'),
             ),

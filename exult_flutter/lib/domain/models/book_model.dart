@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 /// Book status in the system
 enum BookStatus {
+  pending,
   available,
   borrowed;
 
@@ -16,6 +17,8 @@ enum BookStatus {
 
   String get displayName {
     switch (this) {
+      case BookStatus.pending:
+        return 'Pending';
       case BookStatus.available:
         return 'Available';
       case BookStatus.borrowed:
@@ -48,6 +51,9 @@ class Book {
   final String description;
   final String? coverImageUrl;
   final BookOwnerType ownerType;
+  final String? ownerId;
+  final Map<String, int> contributors;
+  final List<String> contributorIds;
   final List<String> categories;
   final List<String> genres;
   final double depositAmount;
@@ -64,6 +70,9 @@ class Book {
     required this.description,
     this.coverImageUrl,
     required this.ownerType,
+    this.ownerId,
+    this.contributors = const {},
+    this.contributorIds = const [],
     required this.categories,
     this.genres = const [],
     required this.depositAmount,
@@ -82,6 +91,9 @@ class Book {
       'description': description,
       'coverImageUrl': coverImageUrl,
       'ownerType': ownerType.toJson(),
+      'ownerId': ownerId,
+      'contributors': contributors,
+      'contributorIds': contributorIds,
       'categories': categories,
       'genres': genres,
       'depositAmount': depositAmount,
@@ -101,6 +113,14 @@ class Book {
       description: json['description'] as String? ?? '',
       coverImageUrl: json['coverImageUrl'] as String?,
       ownerType: BookOwnerType.fromJson(json['ownerType'] as String? ?? 'business'),
+      ownerId: json['ownerId'] as String?,
+      contributors: (json['contributors'] as Map<String, dynamic>?)
+              ?.map((k, v) => MapEntry(k, (v as num).toInt())) ??
+          {},
+      contributorIds: (json['contributorIds'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          [],
       categories: (json['categories'] as List<dynamic>?)?.map((e) => e as String).toList() ?? [],
       genres: (json['genres'] as List<dynamic>?)?.map((e) => e as String).toList() ?? [],
       depositAmount: (json['depositAmount'] as num?)?.toDouble() ?? 0.0,
@@ -119,6 +139,9 @@ class Book {
     String? description,
     String? coverImageUrl,
     BookOwnerType? ownerType,
+    String? ownerId,
+    Map<String, int>? contributors,
+    List<String>? contributorIds,
     List<String>? categories,
     List<String>? genres,
     double? depositAmount,
@@ -135,6 +158,9 @@ class Book {
       description: description ?? this.description,
       coverImageUrl: coverImageUrl ?? this.coverImageUrl,
       ownerType: ownerType ?? this.ownerType,
+      ownerId: ownerId ?? this.ownerId,
+      contributors: contributors ?? this.contributors,
+      contributorIds: contributorIds ?? this.contributorIds,
       categories: categories ?? this.categories,
       genres: genres ?? this.genres,
       depositAmount: depositAmount ?? this.depositAmount,
@@ -145,6 +171,7 @@ class Book {
     );
   }
 
+  bool get isPending => status == BookStatus.pending;
   bool get isAvailable => status == BookStatus.available;
   bool get isBorrowed => status == BookStatus.borrowed;
 }

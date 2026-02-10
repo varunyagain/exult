@@ -7,6 +7,7 @@ import 'package:exult_flutter/domain/models/book_model.dart';
 import 'package:exult_flutter/presentation/providers/admin_provider.dart';
 import 'package:exult_flutter/presentation/providers/books_provider.dart';
 import 'package:exult_flutter/presentation/widgets/attribute_tree_widget.dart';
+import 'package:exult_flutter/presentation/widgets/book_form_dialog.dart' as shared;
 import 'package:intl/intl.dart';
 
 class AdminBooksScreen extends ConsumerStatefulWidget {
@@ -211,6 +212,8 @@ class _AdminBooksScreenState extends ConsumerState<AdminBooksScreen> {
                           ),
                           items: const [
                             DropdownMenuItem(value: null, child: Text('All')),
+                            DropdownMenuItem(
+                                value: 'pending', child: Text('Pending')),
                             DropdownMenuItem(
                                 value: 'available', child: Text('Available')),
                             DropdownMenuItem(
@@ -502,6 +505,20 @@ class _AdminBooksScreenState extends ConsumerState<AdminBooksScreen> {
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  if (book.isPending) ...[
+                    IconButton(
+                      icon: const Icon(Icons.check_circle, size: 20),
+                      tooltip: 'Approve',
+                      color: Colors.green,
+                      onPressed: () => _approveBook(context, ref, book),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.cancel, size: 20),
+                      tooltip: 'Reject',
+                      color: Colors.red,
+                      onPressed: () => _confirmDelete(context, ref, book),
+                    ),
+                  ],
                   IconButton(
                     icon: const Icon(Icons.edit, size: 20),
                     tooltip: 'Edit',
@@ -549,21 +566,40 @@ class _AdminBooksScreenState extends ConsumerState<AdminBooksScreen> {
   }
 
   Widget _buildStatusBadge(BuildContext context, BookStatus status) {
-    final isAvailable = status == BookStatus.available;
+    Color bgColor;
+    Color borderColor;
+    Color textColor;
+
+    switch (status) {
+      case BookStatus.pending:
+        bgColor = Colors.amber.shade50;
+        borderColor = Colors.amber.shade200;
+        textColor = Colors.amber.shade800;
+        break;
+      case BookStatus.available:
+        bgColor = Colors.green.shade50;
+        borderColor = Colors.green.shade200;
+        textColor = Colors.green.shade700;
+        break;
+      case BookStatus.borrowed:
+        bgColor = Colors.orange.shade50;
+        borderColor = Colors.orange.shade200;
+        textColor = Colors.orange.shade700;
+        break;
+    }
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: isAvailable ? Colors.green.shade50 : Colors.orange.shade50,
+        color: bgColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isAvailable ? Colors.green.shade200 : Colors.orange.shade200,
-        ),
+        border: Border.all(color: borderColor),
       ),
       child: Text(
         status.displayName,
         style: TextStyle(
           fontSize: 12,
-          color: isAvailable ? Colors.green.shade700 : Colors.orange.shade700,
+          color: textColor,
           fontWeight: FontWeight.w500,
         ),
       ),
@@ -575,7 +611,7 @@ class _AdminBooksScreenState extends ConsumerState<AdminBooksScreen> {
     final isEditing = book != null;
     final result = await showDialog<Book>(
       context: context,
-      builder: (context) => BookFormDialog(book: book),
+      builder: (context) => shared.BookFormDialog(book: book),
     );
 
     if (result != null) {
@@ -608,6 +644,54 @@ class _AdminBooksScreenState extends ConsumerState<AdminBooksScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Error: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
+  }
+
+  Future<void> _approveBook(
+      BuildContext context, WidgetRef ref, Book book) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Approve Book'),
+        content: Text(
+          'Approve "${book.title}" by ${book.author}? It will become visible in the catalog.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Approve'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      try {
+        final bookRepository = ref.read(bookRepositoryProvider);
+        await bookRepository.approveBook(book.id);
+        ref.invalidate(allBooksProvider);
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Book approved successfully'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error approving book: $e'),
               backgroundColor: Colors.red,
             ),
           );
@@ -666,427 +750,3 @@ class _AdminBooksScreenState extends ConsumerState<AdminBooksScreen> {
   }
 }
 
-class BookFormDialog extends StatefulWidget {
-  final Book? book;
-
-  const BookFormDialog({super.key, this.book});
-
-  @override
-  State<BookFormDialog> createState() => _BookFormDialogState();
-}
-
-class _BookFormDialogState extends State<BookFormDialog> {
-  final _formKey = GlobalKey<FormState>();
-  late final TextEditingController _titleController;
-  late final TextEditingController _authorController;
-  late final TextEditingController _isbnController;
-  late final TextEditingController _descriptionController;
-  late final TextEditingController _coverUrlController;
-  late final TextEditingController _depositController;
-  late final TextEditingController _totalCopiesController;
-  late final TextEditingController _availableCopiesController;
-
-  late BookOwnerType _ownerType;
-  late BookStatus _status;
-  late List<String> _selectedCategories;
-  late List<String> _selectedGenres;
-
-  @override
-  void initState() {
-    super.initState();
-    final book = widget.book;
-    _titleController = TextEditingController(text: book?.title ?? '');
-    _authorController = TextEditingController(text: book?.author ?? '');
-    _isbnController = TextEditingController(text: book?.isbn ?? '');
-    _descriptionController =
-        TextEditingController(text: book?.description ?? '');
-    _coverUrlController =
-        TextEditingController(text: book?.coverImageUrl ?? '');
-    _depositController =
-        TextEditingController(text: book?.depositAmount.toString() ?? '200');
-    _totalCopiesController =
-        TextEditingController(text: book?.totalCopies.toString() ?? '1');
-    _availableCopiesController =
-        TextEditingController(text: book?.availableCopies.toString() ?? '1');
-
-    _ownerType = book?.ownerType ?? BookOwnerType.business;
-    _status = book?.status ?? BookStatus.available;
-    _selectedCategories = book?.categories.toList() ?? [];
-    _selectedGenres = book?.genres.toList() ?? [];
-  }
-
-  @override
-  void dispose() {
-    _titleController.dispose();
-    _authorController.dispose();
-    _isbnController.dispose();
-    _descriptionController.dispose();
-    _coverUrlController.dispose();
-    _depositController.dispose();
-    _totalCopiesController.dispose();
-    _availableCopiesController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final isEditing = widget.book != null;
-
-    return AlertDialog(
-      title: Text(isEditing ? 'Edit Book' : 'Add New Book'),
-      content: SizedBox(
-        width: 600,
-        child: Form(
-          key: _formKey,
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Title and Author Row
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: _titleController,
-                        decoration: const InputDecoration(
-                          labelText: 'Title *',
-                          border: OutlineInputBorder(),
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Title is required';
-                          }
-                          return null;
-                        },
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: TextFormField(
-                        controller: _authorController,
-                        decoration: const InputDecoration(
-                          labelText: 'Author *',
-                          border: OutlineInputBorder(),
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Author is required';
-                          }
-                          return null;
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-
-                // ISBN and Cover URL Row
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: _isbnController,
-                        decoration: const InputDecoration(
-                          labelText: 'ISBN',
-                          border: OutlineInputBorder(),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: TextFormField(
-                        controller: _coverUrlController,
-                        decoration: const InputDecoration(
-                          labelText: 'Cover Image URL',
-                          border: OutlineInputBorder(),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-
-                // Description
-                TextFormField(
-                  controller: _descriptionController,
-                  decoration: const InputDecoration(
-                    labelText: 'Description',
-                    border: OutlineInputBorder(),
-                    alignLabelWithHint: true,
-                  ),
-                  maxLines: 3,
-                ),
-                const SizedBox(height: 16),
-
-                // Deposit, Total Copies, Available Copies Row
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: _depositController,
-                        decoration: const InputDecoration(
-                          labelText: 'Deposit Amount (₹) *',
-                          border: OutlineInputBorder(),
-                        ),
-                        keyboardType: TextInputType.number,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Required';
-                          }
-                          if (double.tryParse(value) == null) {
-                            return 'Invalid amount';
-                          }
-                          return null;
-                        },
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: TextFormField(
-                        controller: _totalCopiesController,
-                        decoration: const InputDecoration(
-                          labelText: 'Total Copies *',
-                          border: OutlineInputBorder(),
-                        ),
-                        keyboardType: TextInputType.number,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Required';
-                          }
-                          if (int.tryParse(value) == null) {
-                            return 'Invalid number';
-                          }
-                          return null;
-                        },
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: TextFormField(
-                        controller: _availableCopiesController,
-                        decoration: const InputDecoration(
-                          labelText: 'Available Copies *',
-                          border: OutlineInputBorder(),
-                        ),
-                        keyboardType: TextInputType.number,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Required';
-                          }
-                          final available = int.tryParse(value);
-                          if (available == null) {
-                            return 'Invalid number';
-                          }
-                          final total =
-                              int.tryParse(_totalCopiesController.text) ?? 0;
-                          if (available > total) {
-                            return 'Cannot exceed total';
-                          }
-                          return null;
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-
-                // Owner Type and Status Row
-                Row(
-                  children: [
-                    Expanded(
-                      child: DropdownButtonFormField<BookOwnerType>(
-                        value: _ownerType,
-                        decoration: const InputDecoration(
-                          labelText: 'Owner Type',
-                          border: OutlineInputBorder(),
-                        ),
-                        items: BookOwnerType.values.map((type) {
-                          return DropdownMenuItem(
-                            value: type,
-                            child: Text(type == BookOwnerType.business
-                                ? 'Business'
-                                : 'Community'),
-                          );
-                        }).toList(),
-                        onChanged: (value) {
-                          if (value != null) {
-                            setState(() => _ownerType = value);
-                          }
-                        },
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: DropdownButtonFormField<BookStatus>(
-                        value: _status,
-                        decoration: const InputDecoration(
-                          labelText: 'Status',
-                          border: OutlineInputBorder(),
-                        ),
-                        items: BookStatus.values.map((status) {
-                          return DropdownMenuItem(
-                            value: status,
-                            child: Text(status.displayName),
-                          );
-                        }).toList(),
-                        onChanged: (value) {
-                          if (value != null) {
-                            setState(() => _status = value);
-                          }
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-
-                // Categories
-                Row(
-                  children: [
-                    Text(
-                      'Categories',
-                      style: Theme.of(context).textTheme.titleSmall,
-                    ),
-                    const Spacer(),
-                    TextButton.icon(
-                      onPressed: () async {
-                        final result = await AttributePickerDialog.show(
-                          context,
-                          _selectedCategories.toSet(),
-                        );
-                        if (result != null) {
-                          setState(() {
-                            _selectedCategories = result.toList();
-                          });
-                        }
-                      },
-                      icon: const Icon(Icons.edit, size: 18),
-                      label: const Text('Select'),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                if (_selectedCategories.isEmpty)
-                  Text(
-                    'No categories selected',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Colors.grey,
-                        ),
-                  )
-                else
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: _selectedCategories.map((category) {
-                      return Chip(
-                        label: Text(category, style: const TextStyle(fontSize: 12)),
-                        deleteIcon: const Icon(Icons.close, size: 16),
-                        onDeleted: () {
-                          setState(() {
-                            _selectedCategories.remove(category);
-                          });
-                        },
-                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        visualDensity: VisualDensity.compact,
-                      );
-                    }).toList(),
-                  ),
-                const SizedBox(height: 16),
-
-                // Genres
-                Row(
-                  children: [
-                    Text(
-                      'Genres',
-                      style: Theme.of(context).textTheme.titleSmall,
-                    ),
-                    const Spacer(),
-                    TextButton.icon(
-                      onPressed: () async {
-                        final result = await AttributePickerDialog.showGenre(
-                          context,
-                          _selectedGenres.toSet(),
-                        );
-                        if (result != null) {
-                          setState(() {
-                            _selectedGenres = result.toList();
-                          });
-                        }
-                      },
-                      icon: const Icon(Icons.edit, size: 18),
-                      label: const Text('Select'),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                if (_selectedGenres.isEmpty)
-                  Text(
-                    'No genres selected',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Colors.grey,
-                        ),
-                  )
-                else
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: _selectedGenres.map((genre) {
-                      return Chip(
-                        label: Text(genre, style: const TextStyle(fontSize: 12)),
-                        deleteIcon: const Icon(Icons.close, size: 16),
-                        onDeleted: () {
-                          setState(() {
-                            _selectedGenres.remove(genre);
-                          });
-                        },
-                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        visualDensity: VisualDensity.compact,
-                      );
-                    }).toList(),
-                  ),
-              ],
-            ),
-          ),
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
-        ),
-        FilledButton(
-          onPressed: _submit,
-          child: Text(isEditing ? 'Update' : 'Add Book'),
-        ),
-      ],
-    );
-  }
-
-  void _submit() {
-    if (_formKey.currentState!.validate()) {
-      final book = Book(
-        id: widget.book?.id ?? '',
-        title: _titleController.text.trim(),
-        author: _authorController.text.trim(),
-        isbn: _isbnController.text.trim().isEmpty
-            ? null
-            : _isbnController.text.trim(),
-        description: _descriptionController.text.trim(),
-        coverImageUrl: _coverUrlController.text.trim().isEmpty
-            ? null
-            : _coverUrlController.text.trim(),
-        ownerType: _ownerType,
-        categories: _selectedCategories,
-        genres: _selectedGenres,
-        depositAmount: double.parse(_depositController.text),
-        status: _status,
-        totalCopies: int.parse(_totalCopiesController.text),
-        availableCopies: int.parse(_availableCopiesController.text),
-        createdAt: widget.book?.createdAt ?? DateTime.now(),
-      );
-
-      Navigator.of(context).pop(book);
-    }
-  }
-}

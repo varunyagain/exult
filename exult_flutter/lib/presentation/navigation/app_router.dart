@@ -20,6 +20,7 @@ import 'package:exult_flutter/presentation/screens/admin/admin_users_screen.dart
 import 'package:exult_flutter/presentation/screens/admin/admin_user_detail_screen.dart';
 import 'package:exult_flutter/presentation/screens/admin/admin_books_screen.dart';
 import 'package:exult_flutter/presentation/screens/admin/admin_financials_screen.dart';
+import 'package:exult_flutter/presentation/screens/books/my_books_screen.dart';
 
 /// Notifier that triggers GoRouter redirect re-evaluation when auth state changes
 class _RouterNotifier extends ChangeNotifier {
@@ -148,6 +149,12 @@ final routerProvider = Provider<GoRouter>((ref) {
         ),
       ),
       GoRoute(
+        path: RouteConstants.myBooks,
+        pageBuilder: (context, state) => const MaterialPage(
+          child: MyBooksScreen(),
+        ),
+      ),
+      GoRoute(
         path: RouteConstants.subscribe,
         pageBuilder: (context, state) => const MaterialPage(
           child: SubscribeScreen(),
@@ -227,6 +234,7 @@ bool _isProtectedRoute(String location) {
     RouteConstants.books,
     RouteConstants.profile,
     RouteConstants.loans,
+    RouteConstants.myBooks,
     RouteConstants.subscribe,
     RouteConstants.admin,
     RouteConstants.adminSubscribers,

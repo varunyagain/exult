@@ -22,12 +22,13 @@ service cloud.firestore {
     match /books/{bookId} {
       // Anyone can read books
       allow read: if true;
-      // Allow create for seeding (TODO: tighten to require auth after initial setup)
-      allow create: if true;
+      // Authenticated users can create books
+      allow create: if request.auth != null;
       // Authenticated users can update books (borrow/return changes availableCopies/status)
-      // Only admins can delete
       allow update: if request.auth != null;
-      allow delete: if isAdmin();
+      // Admins can delete any book; users can delete their own pending books
+      allow delete: if isAdmin() ||
+        (request.auth != null && resource.data.ownerId == request.auth.uid && resource.data.status == 'pending');
     }
 
     // Subscriptions collection

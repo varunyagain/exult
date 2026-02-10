@@ -115,4 +115,120 @@ class FirebaseBookRepository implements BookRepository {
         .doc(bookId)
         .update({'status': status.name});
   }
+
+  @override
+  Stream<List<Book>> getUserBooks(String userId) {
+    return _firestore
+        .collection(FirebaseConstants.booksCollection)
+        .where('contributorIds', arrayContains: userId)
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.docs.map((doc) {
+        return Book.fromJson({...doc.data(), 'id': doc.id});
+      }).toList();
+    });
+  }
+
+  @override
+  Future<Book?> findBookByIsbn(String isbn) async {
+    // Query by ISBN only — no composite index needed.
+    // Filter out pending books in code.
+    final snapshot = await _firestore
+        .collection(FirebaseConstants.booksCollection)
+        .where('isbn', isEqualTo: isbn)
+        .get();
+
+    if (snapshot.docs.isEmpty) return null;
+    for (final doc in snapshot.docs) {
+      final book = Book.fromJson({...doc.data(), 'id': doc.id});
+      if (!book.isPending) return book;
+    }
+    return null;
+  }
+
+  @override
+  Future<void> addCopyToBook(String bookId, String userId) async {
+    final docRef = _firestore
+        .collection(FirebaseConstants.booksCollection)
+        .doc(bookId);
+
+    await _firestore.runTransaction((transaction) async {
+      final doc = await transaction.get(docRef);
+      if (!doc.exists) throw Exception('Book not found');
+
+      final data = doc.data()!;
+      final contributors = Map<String, int>.from(
+        (data['contributors'] as Map<String, dynamic>?)
+                ?.map((k, v) => MapEntry(k, (v as num).toInt())) ??
+            {},
+      );
+      final contributorIds = List<String>.from(
+        (data['contributorIds'] as List<dynamic>?) ?? [],
+      );
+      final totalCopies = (data['totalCopies'] as num?)?.toInt() ?? 1;
+      final availableCopies = (data['availableCopies'] as num?)?.toInt() ?? 1;
+
+      contributors[userId] = (contributors[userId] ?? 0) + 1;
+      if (!contributorIds.contains(userId)) {
+        contributorIds.add(userId);
+      }
+
+      transaction.update(docRef, {
+        'contributors': contributors,
+        'contributorIds': contributorIds,
+        'totalCopies': totalCopies + 1,
+        'availableCopies': availableCopies + 1,
+      });
+    });
+  }
+
+  @override
+  Future<void> removeCopyFromBook(String bookId, String userId) async {
+    final docRef = _firestore
+        .collection(FirebaseConstants.booksCollection)
+        .doc(bookId);
+
+    await _firestore.runTransaction((transaction) async {
+      final doc = await transaction.get(docRef);
+      if (!doc.exists) throw Exception('Book not found');
+
+      final data = doc.data()!;
+      final contributors = Map<String, int>.from(
+        (data['contributors'] as Map<String, dynamic>?)
+                ?.map((k, v) => MapEntry(k, (v as num).toInt())) ??
+            {},
+      );
+      final contributorIds = List<String>.from(
+        (data['contributorIds'] as List<dynamic>?) ?? [],
+      );
+      final totalCopies = (data['totalCopies'] as num?)?.toInt() ?? 1;
+      final availableCopies = (data['availableCopies'] as num?)?.toInt() ?? 1;
+
+      final userCopies = contributors[userId] ?? 0;
+      if (userCopies <= 0) throw Exception('No copies to remove');
+
+      if (userCopies == 1) {
+        contributors.remove(userId);
+        contributorIds.remove(userId);
+      } else {
+        contributors[userId] = userCopies - 1;
+      }
+
+      transaction.update(docRef, {
+        'contributors': contributors,
+        'contributorIds': contributorIds,
+        'totalCopies': (totalCopies - 1).clamp(0, totalCopies),
+        'availableCopies': (availableCopies - 1).clamp(0, availableCopies),
+      });
+    });
+  }
+
+  @override
+  Future<void> approveBook(String bookId) async {
+    await _firestore
+        .collection(FirebaseConstants.booksCollection)
+        .doc(bookId)
+        .update({'status': BookStatus.available.name});
+  }
 }

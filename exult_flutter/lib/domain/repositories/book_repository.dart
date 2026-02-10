@@ -28,4 +28,19 @@ abstract class BookRepository {
 
   /// Update book status
   Future<void> updateBookStatus(String bookId, BookStatus status);
+
+  /// Get a stream of books where the user is an owner or contributor
+  Stream<List<Book>> getUserBooks(String userId);
+
+  /// Find an approved book by ISBN (status != pending)
+  Future<Book?> findBookByIsbn(String isbn);
+
+  /// Add a user's copy to an existing book
+  Future<void> addCopyToBook(String bookId, String userId);
+
+  /// Remove a user's copy from a book
+  Future<void> removeCopyFromBook(String bookId, String userId);
+
+  /// Approve a pending book (set status to available)
+  Future<void> approveBook(String bookId);
 }
