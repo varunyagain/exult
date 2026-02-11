@@ -11,6 +11,7 @@ Fields:
   address: UserAddress?    # street, city, pincode
   createdAt: DateTime
   isActive: bool
+  favoriteBookIds: List<String>  # Book IDs the user has favorited (default [])
 
 Computed:
   isAdmin → role == UserRole.admin
@@ -115,7 +116,7 @@ Fields:
 ## Enums
 ```
 UserRole: subscriber, admin
-BookStatus: available, borrowed
+BookStatus: available, borrowed, pending
 BookOwnerType: business, user
 LoanStatus: active, returned, overdue
 SubscriptionTier: oneBook, threeBooks, fiveBooks

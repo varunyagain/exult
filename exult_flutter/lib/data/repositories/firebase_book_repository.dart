@@ -25,6 +25,20 @@ class FirebaseBookRepository implements BookRepository {
   }
 
   @override
+  Stream<List<Book>> getBrowsableBooks() {
+    return _firestore
+        .collection(FirebaseConstants.booksCollection)
+        .where('status', whereIn: ['available', 'borrowed'])
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.docs.map((doc) {
+        return Book.fromJson({...doc.data(), 'id': doc.id});
+      }).toList();
+    });
+  }
+
+  @override
   Stream<List<Book>> getAllBooks() {
     return _firestore
         .collection(FirebaseConstants.booksCollection)
