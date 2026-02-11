@@ -66,6 +66,7 @@ class UserModel {
   final UserAddress? address;
   final DateTime createdAt;
   final bool isActive;
+  final List<String> favoriteBookIds;
 
   const UserModel({
     required this.uid,
@@ -76,6 +77,7 @@ class UserModel {
     this.address,
     required this.createdAt,
     this.isActive = true,
+    this.favoriteBookIds = const [],
   });
 
   Map<String, dynamic> toJson() {
@@ -88,6 +90,7 @@ class UserModel {
       'address': address?.toJson(),
       'createdAt': Timestamp.fromDate(createdAt),
       'isActive': isActive,
+      'favoriteBookIds': favoriteBookIds,
     };
   }
 
@@ -103,6 +106,9 @@ class UserModel {
           : null,
       createdAt: (json['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       isActive: json['isActive'] as bool? ?? true,
+      favoriteBookIds: List<String>.from(
+        (json['favoriteBookIds'] as List<dynamic>?) ?? [],
+      ),
     );
   }
 
@@ -115,6 +121,7 @@ class UserModel {
     UserAddress? address,
     DateTime? createdAt,
     bool? isActive,
+    List<String>? favoriteBookIds,
   }) {
     return UserModel(
       uid: uid ?? this.uid,
@@ -125,6 +132,7 @@ class UserModel {
       address: address ?? this.address,
       createdAt: createdAt ?? this.createdAt,
       isActive: isActive ?? this.isActive,
+      favoriteBookIds: favoriteBookIds ?? this.favoriteBookIds,
     );
   }
 

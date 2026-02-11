@@ -17,6 +17,7 @@
 
 ## Book Providers (`presentation/providers/books_provider.dart`)
 - `availableBooksProvider` - StreamProvider<List<Book>> - Available books only
+- `browseBooksProvider` - StreamProvider<List<Book>> - Browsable books (available + borrowed, no pending)
 - `allBooksProvider` - StreamProvider<List<Book>> - All books (admin)
 - `bookByIdProvider(bookId)` - FutureProvider.family<Book, String>
 - `bookSearchProvider(query)` - FutureProvider.family<List<Book>, String>
@@ -25,10 +26,13 @@
 - `selectedCategoriesProvider` - StateProvider<Set<String>> - Multi-select categories
 - `selectedGenresProvider` - StateProvider<Set<String>> - Multi-select genres
 - `filteredBooksProvider` - StreamProvider<List<Book>> - Filtered by single category
-- `allBookCategoriesProvider` - Provider<Set<String>> - Distinct categories from available books
+- `allBookCategoriesProvider` - Provider<Set<String>> - Distinct categories from browsable books
 - `allBookCategoriesAdminProvider` - Provider<Set<String>> - Distinct categories from ALL books (admin)
-- `allBookGenresProvider` - Provider<Set<String>> - Distinct genres from available books
+- `allBookGenresProvider` - Provider<Set<String>> - Distinct genres from browsable books
 - `allBookGenresAdminProvider` - Provider<Set<String>> - Distinct genres from ALL books (admin)
+- `favoriteBookIdsProvider` - StreamProvider<Set<String>> - Current user's favorited book IDs
+- `favoriteControllerProvider` - StateNotifierProvider<FavoriteController, AsyncValue<void>>
+  - Methods: toggleFavorite(bookId, isFavorited)
 
 ## Subscription & Loan Providers (`presentation/providers/subscription_provider.dart`)
 - `loanRepositoryProvider` - Provider<LoanRepository> - DI for loan repo
@@ -64,8 +68,13 @@
 - sendPasswordResetEmail(email)
 - authStateChanges → Stream<User?>
 
+### FirebaseUserRepository
+- addFavorite(userId, bookId) → void (uses FieldValue.arrayUnion)
+- removeFavorite(userId, bookId) → void (uses FieldValue.arrayRemove)
+
 ### FirebaseBookRepository
 - getAvailableBooks() → Stream<List<Book>>
+- getBrowsableBooks() → Stream<List<Book>> (status in [available, borrowed])
 - getAllBooks() → Stream<List<Book>>
 - getBookById(bookId) → Book
 - searchBooks(query) → List<Book> (client-side)

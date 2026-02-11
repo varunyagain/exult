@@ -5,6 +5,9 @@ abstract class BookRepository {
   /// Get a stream of available books
   Stream<List<Book>> getAvailableBooks();
 
+  /// Get a stream of browsable books (available + borrowed, no pending)
+  Stream<List<Book>> getBrowsableBooks();
+
   /// Get a stream of all books (including borrowed)
   Stream<List<Book>> getAllBooks();
 

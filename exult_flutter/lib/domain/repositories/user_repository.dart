@@ -25,4 +25,10 @@ abstract class UserRepository {
 
   /// Check if user exists
   Future<bool> userExists(String userId);
+
+  /// Add a book to user's favorites
+  Future<void> addFavorite(String userId, String bookId);
+
+  /// Remove a book from user's favorites
+  Future<void> removeFavorite(String userId, String bookId);
 }

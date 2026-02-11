@@ -32,12 +32,13 @@ class _BrowseBooksScreenState extends ConsumerState<BrowseBooksScreen> {
   @override
   Widget build(BuildContext context) {
     final currentUser = ref.watch(currentUserProvider);
-    final availableBooks = ref.watch(availableBooksProvider);
+    final browseBooks = ref.watch(browseBooksProvider);
     final isAdmin = ref.watch(isAdminProvider);
     final selectedCategories = ref.watch(selectedCategoriesProvider);
     final categoriesWithBooks = ref.watch(allBookCategoriesProvider);
     final selectedGenres = ref.watch(selectedGenresProvider);
     final genresWithBooks = ref.watch(allBookGenresProvider);
+    final favoriteIds = ref.watch(favoriteBookIdsProvider).valueOrNull ?? {};
 
     // Auto-select all attribute values on first load so the tree shows
     // every node with books as checked (leaf → selected, parents → derived).
@@ -193,7 +194,7 @@ class _BrowseBooksScreenState extends ConsumerState<BrowseBooksScreen> {
 
                     // Books Grid
                     Expanded(
-                      child: availableBooks.when(
+                      child: browseBooks.when(
                         data: (books) {
                           // Apply category filter
                           var filteredBooks = books;
@@ -225,6 +226,16 @@ class _BrowseBooksScreenState extends ConsumerState<BrowseBooksScreen> {
                                       .toLowerCase()
                                       .contains(query);
                             }).toList();
+                          }
+
+                          // Sort favorites first (stable sort preserves createdAt order within each group)
+                          if (!isAdmin && favoriteIds.isNotEmpty) {
+                            filteredBooks = List.of(filteredBooks)
+                              ..sort((a, b) {
+                                final aFav = favoriteIds.contains(a.id) ? 0 : 1;
+                                final bFav = favoriteIds.contains(b.id) ? 0 : 1;
+                                return aFav.compareTo(bFav);
+                              });
                           }
 
                           if (filteredBooks.isEmpty) {
@@ -285,7 +296,17 @@ class _BrowseBooksScreenState extends ConsumerState<BrowseBooksScreen> {
                             ),
                             itemCount: filteredBooks.length,
                             itemBuilder: (context, index) {
-                              return BookCard(book: filteredBooks[index]);
+                              final book = filteredBooks[index];
+                              final isFav = favoriteIds.contains(book.id);
+                              return BookCard(
+                                book: book,
+                                isFavorited: isFav,
+                                onFavoriteToggle: isAdmin
+                                    ? null
+                                    : () => ref
+                                        .read(favoriteControllerProvider.notifier)
+                                        .toggleFavorite(book.id, isFav),
+                              );
                             },
                           );
                         },

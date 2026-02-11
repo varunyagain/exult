@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:exult_flutter/core/constants/route_constants.dart';
 import 'package:exult_flutter/domain/models/book_model.dart';
+import 'package:exult_flutter/presentation/providers/admin_provider.dart';
 import 'package:exult_flutter/presentation/providers/books_provider.dart';
 import 'package:exult_flutter/presentation/providers/auth_provider.dart';
 import 'package:exult_flutter/presentation/providers/subscription_provider.dart';
@@ -20,11 +21,25 @@ class BookDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final bookAsync = ref.watch(bookByIdProvider(bookId));
     final currentUser = ref.watch(currentUserProvider);
+    final isAdmin = ref.watch(isAdminProvider);
+    final favoriteIds = ref.watch(favoriteBookIdsProvider).valueOrNull ?? {};
+    final isFavorited = favoriteIds.contains(bookId);
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Book Details'),
         actions: [
+          if (!isAdmin)
+            IconButton(
+              icon: Icon(
+                isFavorited ? Icons.favorite : Icons.favorite_border,
+                color: isFavorited ? Colors.red : null,
+              ),
+              tooltip: isFavorited ? 'Remove from Favorites' : 'Add to Favorites',
+              onPressed: () => ref
+                  .read(favoriteControllerProvider.notifier)
+                  .toggleFavorite(bookId, isFavorited),
+            ),
           IconButton(
             icon: const Icon(Icons.home),
             onPressed: () => context.go(RouteConstants.books),

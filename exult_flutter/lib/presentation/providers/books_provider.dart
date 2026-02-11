@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:exult_flutter/data/repositories/firebase_book_repository.dart';
 import 'package:exult_flutter/domain/models/book_model.dart';
 import 'package:exult_flutter/domain/repositories/book_repository.dart';
+import 'package:exult_flutter/domain/repositories/user_repository.dart';
 import 'package:exult_flutter/presentation/providers/auth_provider.dart';
 
 /// Provider for the book repository
@@ -13,6 +14,12 @@ final bookRepositoryProvider = Provider<BookRepository>((ref) {
 final availableBooksProvider = StreamProvider<List<Book>>((ref) {
   final bookRepository = ref.watch(bookRepositoryProvider);
   return bookRepository.getAvailableBooks();
+});
+
+/// Provider for browsable books (available + borrowed, no pending)
+final browseBooksProvider = StreamProvider<List<Book>>((ref) {
+  final bookRepository = ref.watch(bookRepositoryProvider);
+  return bookRepository.getBrowsableBooks();
 });
 
 /// Provider for all books stream (admin use)
@@ -80,9 +87,9 @@ final filteredBooksProvider = StreamProvider<List<Book>>((ref) {
   }
 });
 
-/// Provider that collects all distinct category names across all books.
+/// Provider that collects all distinct category names across browsable books.
 final allBookCategoriesProvider = Provider<Set<String>>((ref) {
-  final booksAsync = ref.watch(availableBooksProvider);
+  final booksAsync = ref.watch(browseBooksProvider);
   final books = booksAsync.valueOrNull ?? [];
   final categories = <String>{};
   for (final book in books) {
@@ -102,9 +109,9 @@ final allBookCategoriesAdminProvider = Provider<Set<String>>((ref) {
   return categories;
 });
 
-/// Provider that collects all distinct genre names across available books.
+/// Provider that collects all distinct genre names across browsable books.
 final allBookGenresProvider = Provider<Set<String>>((ref) {
-  final booksAsync = ref.watch(availableBooksProvider);
+  final booksAsync = ref.watch(browseBooksProvider);
   final books = booksAsync.valueOrNull ?? [];
   final genres = <String>{};
   for (final book in books) {
@@ -159,6 +166,51 @@ final selectedMyBooksCategoriesProvider = StateProvider<Set<String>>((ref) => {}
 
 /// Selected genres for My Books filter sidebar
 final selectedMyBooksGenresProvider = StateProvider<Set<String>>((ref) => {});
+
+/// Provider for current user's favorite book IDs as a reactive Set.
+final favoriteBookIdsProvider = StreamProvider<Set<String>>((ref) {
+  final authState = ref.watch(authStateProvider);
+  final userRepository = ref.watch(userRepositoryProvider);
+
+  final user = authState.valueOrNull;
+  if (user == null) return Stream.value({});
+
+  return userRepository.watchUser(user.uid).map((userModel) {
+    return userModel?.favoriteBookIds.toSet() ?? {};
+  });
+});
+
+/// Controller for toggling book favorites.
+class FavoriteController extends StateNotifier<AsyncValue<void>> {
+  final UserRepository _userRepository;
+  final String _userId;
+
+  FavoriteController(this._userRepository, this._userId)
+      : super(const AsyncValue.data(null));
+
+  Future<void> toggleFavorite(String bookId, bool isFavorited) async {
+    state = const AsyncValue.loading();
+    try {
+      if (isFavorited) {
+        await _userRepository.removeFavorite(_userId, bookId);
+      } else {
+        await _userRepository.addFavorite(_userId, bookId);
+      }
+      state = const AsyncValue.data(null);
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+    }
+  }
+}
+
+/// Provider for favorite controller.
+final favoriteControllerProvider =
+    StateNotifierProvider<FavoriteController, AsyncValue<void>>((ref) {
+  final userRepository = ref.watch(userRepositoryProvider);
+  final currentUser = ref.watch(currentUserProvider).valueOrNull;
+  final userId = currentUser?.uid ?? '';
+  return FavoriteController(userRepository, userId);
+});
 
 /// Controller for user book listing operations
 class UserBookController extends StateNotifier<AsyncValue<void>> {

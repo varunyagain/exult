@@ -47,7 +47,7 @@ exult/
 │       │   └── app_router.dart            # GoRouter with auth redirects
 │       ├── providers/
 │       │   ├── auth_provider.dart         # Auth state, controller
-│       │   ├── books_provider.dart        # Book streams, search, category/genre filter
+│       │   ├── books_provider.dart        # Book streams, search, category/genre filter, favorites
 │       │   ├── subscription_provider.dart # Subscription state, controller
 │       │   └── admin_provider.dart        # Admin metrics, user details
 │       ├── screens/
@@ -70,7 +70,7 @@ exult/
 │       │       ├── admin_books_screen.dart         # Book catalog mgmt + BookFormDialog
 │       │       └── admin_financials_screen.dart    # Revenue analytics
 │       └── widgets/
-│           ├── cards/book_card.dart                # Book grid item
+│           ├── cards/book_card.dart                # Book grid item (with optional favorite heart)
 │           └── attribute_tree_widget.dart          # AttributeTreeWidget + AttributePickerDialog
 ├── exult_flutter/tool/
 │   └── seed_books.dart                            # Standalone seed script
@@ -187,3 +187,9 @@ Both category and genre filtering use the same widget system:
 16. Admin user detail screen has subscription actions (create/edit/cancel), borrow book for user, and return book on active loans
 17. My Loans screen has active/returned tabs with full loan cards, return book flow
 18. `loanRepositoryProvider`, `myLoansProvider`, `LoanController`, `loanControllerProvider` live in `subscription_provider.dart`
+19. Browse Books shows both available and borrowed books (not pending) via `browseBooksProvider`
+20. Favorites stored as `favoriteBookIds` List<String> on user doc; toggled via `arrayUnion`/`arrayRemove`
+21. Browse Books sorts favorited books before non-favorites (stable sort preserves createdAt within groups)
+22. BookCard has optional heart icon overlay (top-right); hidden for admins
+23. Book detail screen AppBar has heart toggle for non-admin users
+24. Borrowing a book auto-removes it from favorites (in `LoanController.borrowBook`)

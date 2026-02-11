@@ -208,6 +208,14 @@ class LoanController extends StateNotifier<AsyncValue<void>> {
       final bookRepository = _ref.read(bookRepositoryProvider);
       await bookRepository.updateBook(updatedBook);
 
+      // Auto-remove from favorites (non-critical, no-op if not favorited)
+      try {
+        final userRepository = _ref.read(userRepositoryProvider);
+        await userRepository.removeFavorite(user.uid, book.id);
+      } catch (_) {
+        // Ignore — arrayRemove is a no-op if bookId not in array
+      }
+
       state = const AsyncValue.data(null);
       return true;
     } catch (error, stackTrace) {

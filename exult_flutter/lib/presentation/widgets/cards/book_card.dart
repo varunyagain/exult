@@ -6,10 +6,14 @@ import 'package:intl/intl.dart';
 
 class BookCard extends StatelessWidget {
   final Book book;
+  final bool isFavorited;
+  final VoidCallback? onFavoriteToggle;
 
   const BookCard({
     super.key,
     required this.book,
+    this.isFavorited = false,
+    this.onFavoriteToggle,
   });
 
   @override
@@ -27,20 +31,45 @@ class BookCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Book Cover Image
+            // Book Cover Image with optional favorite heart
             Expanded(
               flex: 3,
-              child: SizedBox(
-                width: double.infinity,
-                child: book.coverImageUrl != null && book.coverImageUrl!.isNotEmpty
-                    ? Image.network(
-                        book.coverImageUrl!,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return _buildPlaceholderCover(context);
-                        },
-                      )
-                    : _buildPlaceholderCover(context),
+              child: Stack(
+                children: [
+                  SizedBox(
+                    width: double.infinity,
+                    height: double.infinity,
+                    child: book.coverImageUrl != null && book.coverImageUrl!.isNotEmpty
+                        ? Image.network(
+                            book.coverImageUrl!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return _buildPlaceholderCover(context);
+                            },
+                          )
+                        : _buildPlaceholderCover(context),
+                  ),
+                  if (onFavoriteToggle != null)
+                    Positioned(
+                      top: 6,
+                      right: 6,
+                      child: GestureDetector(
+                        onTap: onFavoriteToggle,
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: const BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            isFavorited ? Icons.favorite : Icons.favorite_border,
+                            color: isFavorited ? Colors.red : Colors.grey,
+                            size: 20,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ),
 

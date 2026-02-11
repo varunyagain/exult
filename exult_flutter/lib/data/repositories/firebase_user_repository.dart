@@ -90,4 +90,18 @@ class FirebaseUserRepository implements UserRepository {
       throw Exception('Failed to check user existence: $e');
     }
   }
+
+  @override
+  Future<void> addFavorite(String userId, String bookId) async {
+    await _usersCollection.doc(userId).update({
+      'favoriteBookIds': FieldValue.arrayUnion([bookId]),
+    });
+  }
+
+  @override
+  Future<void> removeFavorite(String userId, String bookId) async {
+    await _usersCollection.doc(userId).update({
+      'favoriteBookIds': FieldValue.arrayRemove([bookId]),
+    });
+  }
 }
