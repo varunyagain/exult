@@ -33,9 +33,10 @@ service cloud.firestore {
 
     // Subscriptions collection
     match /subscriptions/{subscriptionId} {
-      // Users can read their own subscriptions, admins can read all
-      allow read: if request.auth != null &&
-        (request.auth.uid == resource.data.userId || isAdmin());
+      // Admins can read all subscriptions
+      allow read: if isAdmin();
+      // Users can read their own subscriptions
+      allow read: if request.auth != null && request.auth.uid == resource.data.userId;
       // Users can create their own subscriptions, admins can create for any user
       allow create: if request.auth != null &&
         (request.auth.uid == request.resource.data.userId || isAdmin());
@@ -48,9 +49,10 @@ service cloud.firestore {
 
     // Loans collection
     match /loans/{loanId} {
-      // Users can read their own loans (by borrowerId), admins can read all
-      allow read: if request.auth != null &&
-        (request.auth.uid == resource.data.borrowerId || isAdmin());
+      // Admins can read all loans (no resource.data check → allows unfiltered list queries)
+      allow read: if isAdmin();
+      // Users can read their own loans
+      allow read: if request.auth != null && request.auth.uid == resource.data.borrowerId;
       // Authenticated users can create loans
       allow create: if request.auth != null;
       // Users can update their own loans, admins can update any
