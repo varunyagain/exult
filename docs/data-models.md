@@ -27,6 +27,9 @@ Fields:
   description: String
   coverImageUrl: String?
   ownerType: BookOwnerType # business | user
+  ownerId: String?         # UID of user who listed the book (user-owned books)
+  contributors: Map<String, int>  # userId → copy count (tracks who contributed copies)
+  contributorIds: List<String>    # Flat list of contributor UIDs (for Firestore array-contains queries)
   categories: List<String> # ECORFAN categories (must match tree node names)
   genres: List<String>     # Writing genre tree (must match tree node names)
   depositAmount: double    # INR

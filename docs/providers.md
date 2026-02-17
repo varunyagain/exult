@@ -30,6 +30,10 @@
 - `allBookCategoriesAdminProvider` - Provider<Set<String>> - Distinct categories from ALL books (admin)
 - `allBookGenresProvider` - Provider<Set<String>> - Distinct genres from browsable books
 - `allBookGenresAdminProvider` - Provider<Set<String>> - Distinct genres from ALL books (admin)
+- `userBookCategoriesProvider` - Provider<Set<String>> - Distinct categories from user's books
+- `userBookGenresProvider` - Provider<Set<String>> - Distinct genres from user's books
+- `selectedMyBooksCategoriesProvider` - StateProvider<Set<String>> - My Books category filter state
+- `selectedMyBooksGenresProvider` - StateProvider<Set<String>> - My Books genre filter state
 - `favoriteBookIdsProvider` - StreamProvider<Set<String>> - Current user's favorited book IDs
 - `favoriteControllerProvider` - StateNotifierProvider<FavoriteController, AsyncValue<void>>
   - Methods: toggleFavorite(bookId, isFavorited)

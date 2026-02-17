@@ -36,6 +36,8 @@ exult/
 │   │       └── subscription_repository.dart
 │   ├── data/
 │   │   ├── seed_data.dart                 # 5 sample books seeder
+│   │   ├── services/
+│   │   │   └── google_books_service.dart  # ISBN lookup via Google Books API + Open Library covers
 │   │   └── repositories/                  # Firebase implementations
 │   │       ├── firebase_auth_repository.dart
 │   │       ├── firebase_user_repository.dart
@@ -154,6 +156,7 @@ Uses a shared `isAdmin()` helper function (with `exists()` guard before `get()` 
 ## Firestore Indexes (`exult_flutter/firestore.indexes.json`)
 - `books`: status (asc) + createdAt (desc)
 - `loans`: borrowerId (asc) + borrowedAt (desc)
+- `books`: contributorIds (array-contains) + createdAt (desc)
 
 ## Shared Attribute Tree System
 
