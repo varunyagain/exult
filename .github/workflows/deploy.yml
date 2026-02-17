@@ -2,7 +2,7 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [ main ] # This runs the robot every time you push to 'main'
+    branches: [ main ] 
 
 permissions:
   contents: write
@@ -10,26 +10,30 @@ permissions:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4 # 1. Robot grabs your code
+    
+    defaults:
+      run:
+        working-directory: exult_flutter
 
-      - uses: subosito/flutter-action@v2 # 2. Robot installs Flutter
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
 
       - name: Get packages
-        run: flutter pub get # 3. Robot gets your app's tools
+        run: flutter pub get
 
       - name: Build Web
-        # 4. Robot builds the app and plugs in your secrets!
-        # REPLACE 'your-repo-name' with your actual GitHub repo name
+        # Injection of secrets and setting the correct folder path for GitHub
         run: |
-          flutter build web --release --base-href "/your-repo-name/" \
+          flutter build web --release --base-href "/${{ github.event.repository.name }}/" \
           --dart-define=API_KEY=${{ secrets.FIREBASE_API_KEY }} \
           --dart-define=APP_ID=${{ secrets.FIREBASE_APP_ID }}
 
       - name: Deploy 🚀
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          folder: build/web # 5. Robot puts the build on the shelf
-          branch: gh-pages # This is the special shelf name
+          folder: exult_flutter/build/web
+          branch: gh-pages
