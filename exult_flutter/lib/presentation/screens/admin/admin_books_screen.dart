@@ -48,7 +48,7 @@ class _AdminBooksScreenState extends ConsumerState<AdminBooksScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Manage Books'),
+        title: Text('Manage Books', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
         automaticallyImplyLeading: false,
         actions: [
           IconButton(

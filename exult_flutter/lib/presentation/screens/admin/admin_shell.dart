@@ -18,9 +18,9 @@ class AdminShell extends ConsumerWidget {
         children: [
           // Sidebar
           Container(
-            width: 240,
+            width: 300,
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface,
+              color: Theme.of(context).scaffoldBackgroundColor,
               border: Border(
                 right: BorderSide(
                   color: Theme.of(context).dividerColor,
@@ -174,6 +174,7 @@ class _NavItem extends StatelessWidget {
                 Text(
                   label,
                   style: TextStyle(
+                    fontSize: 21,
                     fontWeight:
                         isSelected ? FontWeight.w600 : FontWeight.normal,
                     color: isSelected

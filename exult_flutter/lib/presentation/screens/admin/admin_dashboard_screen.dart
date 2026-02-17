@@ -79,7 +79,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Dashboard'),
+        title: Text('Dashboard', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
         automaticallyImplyLeading: false,
       ),
       body: Column(
@@ -88,18 +88,21 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface,
+              color: Theme.of(context).scaffoldBackgroundColor,
               border: Border(
                 bottom: BorderSide(color: Theme.of(context).dividerColor),
               ),
             ),
             child: Row(
               children: [
-                const Icon(Icons.date_range, size: 20),
+                const Icon(Icons.date_range, size: 24),
                 const SizedBox(width: 12),
                 Text(
                   'Period:',
-                  style: Theme.of(context).textTheme.titleSmall,
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontSize: 17,
+                        fontWeight: FontWeight.bold,
+                      ),
                 ),
                 const SizedBox(width: 12),
                 ...[
@@ -111,15 +114,16 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                 ].map((period) => Padding(
                       padding: const EdgeInsets.only(right: 8),
                       child: ChoiceChip(
-                        label: Text(period),
+                        label: Text(period, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
                         selected: _selectedPeriod == period,
                         onSelected: (_) => _selectPeriod(period),
                       ),
                     )),
                 ActionChip(
-                  avatar: const Icon(Icons.calendar_today, size: 16),
+                  avatar: const Icon(Icons.calendar_today, size: 19),
                   label: Text(
-                      _selectedPeriod == 'Custom' ? 'Custom*' : 'Custom'),
+                      _selectedPeriod == 'Custom' ? 'Custom*' : 'Custom',
+                      style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
                   onPressed: _selectCustomRange,
                 ),
               ],
@@ -153,10 +157,8 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                                   .textTheme
                                   .titleSmall
                                   ?.copyWith(
-                                    color: Theme.of(context)
-                                        .textTheme
-                                        .bodySmall
-                                        ?.color,
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.bold,
                                   ),
                             ),
                           ),

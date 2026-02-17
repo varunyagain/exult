@@ -37,7 +37,7 @@ class AdminUserDetailScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('User Details'),
+        title: Text('User Details', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.go(RouteConstants.adminSubscribers),

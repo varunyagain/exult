@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 /// Application theme configuration matching HTML design
 class AppTheme {
   // Brand colors
-  static const Color primaryColor = Color(0xFF4F46E5); // Indigo
+  static const Color primaryColor = Color(0xFF041666); // Deep navy
   static const Color secondaryColor = Color(0xFF10B981); // Green
-  static const Color backgroundColor = Color(0xFFF7F9FC); // Light gray-blue
+  static const Color backgroundColor = Color(0xFFD1E3D1); // Sage green
   static const Color cardBackground = Colors.white;
 
   // Text colors
@@ -37,7 +37,7 @@ class AppTheme {
 
       // App Bar Theme
       appBarTheme: const AppBarTheme(
-        backgroundColor: Colors.white,
+        backgroundColor: backgroundColor,
         foregroundColor: textPrimary,
         elevation: 0,
         centerTitle: false,

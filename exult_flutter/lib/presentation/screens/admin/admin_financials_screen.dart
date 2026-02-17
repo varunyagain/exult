@@ -7,7 +7,7 @@ class AdminFinancialsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Financials'),
+        title: Text('Financials', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
         automaticallyImplyLeading: false,
       ),
       body: Center(

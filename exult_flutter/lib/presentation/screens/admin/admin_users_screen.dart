@@ -47,7 +47,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Manage Subscribers'),
+        title: Text('Manage Subscribers', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
         automaticallyImplyLeading: false,
         actions: [
           IconButton(
