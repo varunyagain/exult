@@ -26,5 +26,5 @@ void main() async {
     ),
   );
 
-  runApp(const MyApp());
+  runApp(const ExultApp());
 }
