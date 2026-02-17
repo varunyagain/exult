@@ -10,7 +10,6 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Exult'),
         actions: [
           TextButton(
             onPressed: () => context.go(RouteConstants.pricing),
@@ -32,68 +31,87 @@ class HomeScreen extends StatelessWidget {
           const SizedBox(width: 16),
         ],
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            // Hero Section
-            Container(
-              padding: const EdgeInsets.all(64),
-              child: Column(
-                children: [
-                  Text(
-                    AppConstants.appName,
-                    style: Theme.of(context).textTheme.displayLarge,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    AppConstants.appTagline,
-                    style: Theme.of(context).textTheme.headlineMedium,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 32),
-                  ElevatedButton(
-                    onPressed: () => context.go(RouteConstants.pricing),
-                    child: const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      child: Text('View Pricing', style: TextStyle(fontSize: 18)),
+      body: Column(
+        children: [
+          // Central content - vertically centered
+          Expanded(
+            child: Center(
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Hero Section
+                    Container(
+                      padding: const EdgeInsets.all(64),
+                      child: Column(
+                        children: [
+                          Text(
+                            AppConstants.appName,
+                            style: Theme.of(context).textTheme.displayLarge,
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            AppConstants.appTagline,
+                            style: Theme.of(context).textTheme.headlineMedium,
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 32),
+                          ElevatedButton(
+                            onPressed: () => context.go(RouteConstants.pricing),
+                            child: const Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              child: Text('View Pricing', style: TextStyle(fontSize: 18)),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            ),
 
-            // Value Propositions
-            Container(
-              padding: const EdgeInsets.all(32),
-              child: Wrap(
-                spacing: 24,
-                runSpacing: 24,
-                alignment: WrapAlignment.center,
-                children: [
-                  _ValueCard(
-                    icon: Icons.auto_stories,
-                    title: 'Flexible Subscriptions',
-                    description:
-                        'Choose from 1, 3, or 5 book plans with monthly or annual billing options.',
-                  ),
-                  _ValueCard(
-                    icon: Icons.account_balance_wallet,
-                    title: 'Refundable Deposits',
-                    description:
-                        'Pay a small deposit when borrowing books. Get it back when you return them.',
-                  ),
-                  _ValueCard(
-                    icon: Icons.people,
-                    title: 'Community Lending',
-                    description:
-                        'Lend your own books to subscribers and earn money while helping readers.',
-                  ),
-                ],
+                    // Value Propositions
+                    Container(
+                      padding: const EdgeInsets.all(32),
+                      child: Wrap(
+                        spacing: 24,
+                        runSpacing: 24,
+                        alignment: WrapAlignment.center,
+                        children: [
+                          _ValueCard(
+                            icon: Icons.auto_stories,
+                            title: 'Flexible Subscriptions',
+                            description:
+                                'Choose from 1, 3, or 5 book plans with monthly or annual billing options.',
+                          ),
+                          _ValueCard(
+                            icon: Icons.account_balance_wallet,
+                            title: 'Refundable Deposits',
+                            description:
+                                'Pay a small deposit when borrowing books. Get it back when you return them.',
+                          ),
+                          _ValueCard(
+                            icon: Icons.people,
+                            title: 'Community Lending',
+                            description:
+                                'Lend your own books to subscribers and earn money while helping readers.',
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ],
-        ),
+          ),
+
+          // Footer
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: Text(
+              '\u00a9 ${DateTime.now().year} ${AppConstants.appName}. All rights reserved.',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ),
+        ],
       ),
     );
   }
