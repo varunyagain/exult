@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:exult_flutter/app.dart';
-import 'package:exult_flutter/data/seed_data.dart';
 
 // 1. Read the secrets from the environment
 const String apiKey = String.fromEnvironment('FIREBASE_API_KEY');
