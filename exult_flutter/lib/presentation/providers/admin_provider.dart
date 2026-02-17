@@ -8,13 +8,19 @@ import 'package:exult_flutter/presentation/providers/books_provider.dart';
 import 'package:exult_flutter/presentation/providers/subscription_provider.dart';
 
 /// Provider for all users stream (admin only)
+/// Waits for auth to be ready before querying to avoid permission errors on login.
 final allUsersProvider = StreamProvider<List<UserModel>>((ref) {
+  final authState = ref.watch(authStateProvider);
+  if (authState.valueOrNull == null) return Stream.value([]);
   final userRepository = ref.watch(userRepositoryProvider);
   return userRepository.watchAllUsers();
 });
 
 /// Provider for all loans stream (admin only)
+/// Waits for auth to be ready before querying to avoid permission errors on login.
 final allLoansProvider = StreamProvider<List<Loan>>((ref) {
+  final authState = ref.watch(authStateProvider);
+  if (authState.valueOrNull == null) return Stream.value([]);
   final loanRepository = ref.watch(loanRepositoryProvider);
   return loanRepository.watchAllLoans();
 });
