@@ -26,5 +26,9 @@ void main() async {
     ),
   );
 
-  runApp(const ExultApp());
+  runApp(
+    const ProviderScope(
+      child: ExultApp(), // Changed from MyApp
+    ),
+  );
 }
